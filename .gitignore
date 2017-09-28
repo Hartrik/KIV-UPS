@@ -1,0 +1,13 @@
+/*/.temp
+
+# IDEA
+/*/out
+/*/*.iml
+/*/.idea
+
+# Gradle
+/*/build
+/*/.gradle
+/*/gradlew
+/*/gradlew.bat
+/*/gradle

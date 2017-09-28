@@ -1,0 +1,23 @@
+
+.canvas-background {
+    -fx-base: rgb(210, 210, 210);
+}
+
+/***********************************************
+    CONSOLE
+************************************************/
+
+.console-box {
+    -fx-background-color: rgba(0, 88, 136, 0.85);
+}
+
+.console-box .text-area {
+    -fx-font-family: Consolas;
+    -fx-font-size: 12;
+    -fx-display-caret: true;
+}
+
+.console-box .text-field, .console-box .text {
+    -fx-font-family: Consolas;
+    -fx-font-size: 14;
+}
