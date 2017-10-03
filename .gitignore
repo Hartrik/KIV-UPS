@@ -1,9 +1,13 @@
+/.temp
 /*/.temp
 
 # IDEA
 /*/out
 /*/*.iml
 /*/.idea
+
+# CLion
+/*/cmake-build-debug
 
 # Gradle
 /*/build

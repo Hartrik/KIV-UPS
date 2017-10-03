@@ -1,6 +1,9 @@
 package cz.hartrik.puzzle.page.game;
 
+import cz.hartrik.puzzle.net.Connection;
+import cz.hartrik.puzzle.net.ConnectionProvider;
 import cz.hartrik.puzzle.page.Page;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
@@ -12,7 +15,7 @@ import javafx.scene.layout.Pane;
 /**
  *
  * @author Patrik Harag
- * @version 2017-09-28
+ * @version 2017-10-03
  */
 public class PuzzlePage implements Page {
 
@@ -61,4 +64,16 @@ public class PuzzlePage implements Page {
         return scrollPane;
     }
 
+    @Override
+    public void onShow() {
+        Connection connection = ConnectionProvider.connect();
+
+        try {
+            connection.login("My nick");
+            connection.close();
+
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
 }
