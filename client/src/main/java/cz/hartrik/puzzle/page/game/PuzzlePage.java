@@ -1,9 +1,6 @@
 package cz.hartrik.puzzle.page.game;
 
-import cz.hartrik.puzzle.net.Connection;
-import cz.hartrik.puzzle.net.ConnectionProvider;
 import cz.hartrik.puzzle.page.Page;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
@@ -66,14 +63,5 @@ public class PuzzlePage implements Page {
 
     @Override
     public void onShow() {
-        Connection connection = ConnectionProvider.connect();
-
-        try {
-            connection.login("My nick");
-            connection.close();
-
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
     }
 }
