@@ -6,6 +6,7 @@
  * @version: 2017-10-03
  */
 
+#include<stdbool.h>
 #include<stdio.h>
 #include<string.h>
 #include<stdlib.h>
@@ -86,13 +87,13 @@ void* connection_handler(void *socket_desc) {
 
     message_buffer.index = 0;
     message_buffer.content_length = 4;
-    message_buffer.content = malloc(4);  // TODO: free
+    message_buffer.content = malloc(4);
 
     printf("  [%d] ", socket);
     printf("Listening...\n");
 
-    int exit = 0;
-    while (exit == 0) {
+    bool exit = false;
+    while (!exit) {
         ssize_t read_size = recv(socket, socket_buffer, SERVER_BUFFER_SIZE, 0);
         if (read_size > 0) {
             for (int i = 0; i < read_size; ++i) {
@@ -110,7 +111,7 @@ void* connection_handler(void *socket_desc) {
                         fflush(stdout);
 
                         if (strncmp(type, "BYE", 3) == 0) {
-                            exit = 1;
+                            exit = true;
                             break;
                         }
 
@@ -135,6 +136,7 @@ void* connection_handler(void *socket_desc) {
     fflush(stdout);
 
     free(socket_desc);
+    free(message_buffer.content);
 
     return 0;
 }

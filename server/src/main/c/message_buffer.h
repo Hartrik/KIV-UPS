@@ -17,7 +17,7 @@ typedef struct _MessageBuffer {
 } MessageBuffer;
 
 /**
- * Adds char at the ent of a buffer.
+ * Adds char at the end of a buffer.
  *
  * @param buffer buffer
  * @param c char
