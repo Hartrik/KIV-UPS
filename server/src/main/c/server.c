@@ -15,6 +15,7 @@
 #include<pthread.h>
 
 #include "server.h"
+#include "utils.h"
 #include "message_buffer.h"
 #include "protocol.h"
 
@@ -125,8 +126,8 @@ void* connection_handler(void *socket_desc) {
                     message_buffer_add(&message_buffer, socket_buffer[i]);
                 }
             }
-
         }
+        utils_sleep(100);
     }
 
     // write(sock, message, strlen(message));
