@@ -23,7 +23,7 @@ public class ConnectionTest {
     public void testNoActivity() throws Exception {
         Connection connection = ConnectionProvider.connect();
 
-        Thread.sleep(1000);
+        Thread.sleep(5_000);
         // server must recognize /dead/ client
 
         connection.login("Nick");

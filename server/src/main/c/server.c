@@ -3,16 +3,18 @@
  * Socket server, handles multiple clients using threads.
  *
  * @author: Patrik Harag
- * @version: 2017-10-03
+ * @version: 2017-10-06
  */
 
-#include<stdbool.h>
-#include<stdio.h>
-#include<string.h>
-#include<stdlib.h>
-#include<sys/socket.h>
-#include<arpa/inet.h>
-#include<pthread.h>
+#include <stdbool.h>
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
+#include <sys/socket.h>
+#include <arpa/inet.h>
+#include <pthread.h>
+#include <errno.h>
+#include <unistd.h>
 
 #include "server.h"
 #include "utils.h"
@@ -65,8 +67,6 @@ int server_start(int port) {
             perror("Could not create thread");
             return 1;
         }
-
-        printf("Handler assigned\n");
     }
 
     if (client_socket < 0) {
@@ -81,34 +81,45 @@ int server_start(int port) {
  * This will handle connection for each client.
  */
 void* connection_handler(void *socket_desc) {
-    // Get the socket descriptor
+    // Set up socket
     int socket = *(int *) socket_desc;
-    char socket_buffer[SERVER_BUFFER_SIZE];
+    char socket_buffer[SERVER_SOCKET_BUFFER_SIZE];
+
+    // Set up timeout
+    struct timeval timeout;
+    timeout.tv_sec = SERVER_TIMEOUT / 1000;
+    timeout.tv_usec = 0;
+    setsockopt(socket, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof(timeout));
+
+    // Set up message buffer
     MessageBuffer message_buffer;
-
     message_buffer.index = 0;
-    message_buffer.content_length = 4;
-    message_buffer.content = malloc(4);
+    message_buffer.content_length = SERVER_MSG_BUFFER_SIZE;
+    message_buffer.content = malloc(SERVER_MSG_BUFFER_SIZE);
 
-    printf("  [%d] ", socket);
-    printf("Listening...\n");
-
+    unsigned long long last_client_activity = utils_current_millis();
     bool exit = false;
+
+    printf("  [%d] Listening...\n", socket);
+
     while (!exit) {
-        ssize_t read_size = recv(socket, socket_buffer, SERVER_BUFFER_SIZE, 0);
-        if (read_size > 0) {
-            for (int i = 0; i < read_size; ++i) {
+        ssize_t recv_size = recv(socket, socket_buffer, SERVER_SOCKET_BUFFER_SIZE, 0);
+        if (recv_size > 0) {
+            last_client_activity = utils_current_millis();
+
+            for (int i = 0; i < recv_size; ++i) {
                 char c = socket_buffer[i];
                 if (c == PROTOCOL_MESSAGE_SEP) {
                     // end of message
                     if (message_buffer.index != 0) {
                         message_buffer_add(&message_buffer, NULL);
 
-                        char* type = message_buffer_get_type(&message_buffer);
-                        char* content = message_buffer_get_content(&message_buffer);
+                        char *type = message_buffer_get_type(&message_buffer);
+                        char *content = message_buffer_get_content(
+                                &message_buffer);
 
-                        printf("  [%d] ", socket);
-                        printf("Message: type='%s' content='%s'\n", type, content);
+                        printf("  [%d] Message: type='%s' content='%s'\n",
+                               socket, type, content);
                         fflush(stdout);
 
                         if (strncmp(type, "BYE", 3) == 0) {
@@ -120,24 +131,40 @@ void* connection_handler(void *socket_desc) {
                         message_buffer.index = 0;
                     }
                 } else {
-                    if (message_buffer.index == PROTOCOL_TYPE_SIZE)
+                    if (message_buffer.index == PROTOCOL_TYPE_SIZE) {
+                        // divide message type and its content
                         message_buffer_add(&message_buffer, NULL);
+                    }
 
                     message_buffer_add(&message_buffer, socket_buffer[i]);
                 }
             }
+        } else if (recv_size == -1) {
+            if ((errno != EAGAIN) && (errno != EWOULDBLOCK)) {
+                printf("  [%d] Error", socket);
+                perror("");
+            }
+            exit = true;
+        } else {
+            // no data...
+            utils_sleep(100);
         }
-        utils_sleep(100);
+
+        unsigned long long diff = utils_current_millis() - last_client_activity;
+        if (diff > SERVER_TIMEOUT) {
+            printf("  [%d] Timeout (after %llu ms)\n", socket, diff);
+            exit = true;
+        }
     }
 
     // write(sock, message, strlen(message));
 
-    printf("  [%d] ", socket);
-    puts("Client disconnected");
+    printf("  [%d] Client disconnected\n", socket);
     fflush(stdout);
 
     free(socket_desc);
     free(message_buffer.content);
 
+    close(socket);
     return 0;
 }

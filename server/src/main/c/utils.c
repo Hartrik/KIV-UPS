@@ -2,15 +2,16 @@
 /**
  *
  * @author: Patrik Harag
- * @version: 2017-10-05
+ * @version: 2017-10-06
  */
 
 #include <time.h>
 #include <stdio.h>
 #include <errno.h>
+#include <sys/time.h>
 #include "utils.h"
 
-int utils_sleep(unsigned int ms) {
+int utils_sleep(unsigned long ms) {
     int result = 0;
 
     struct timespec ts_remaining;
@@ -28,4 +29,13 @@ int utils_sleep(unsigned int ms) {
     }
 
     return result;
+}
+
+unsigned long long utils_current_millis() {
+    struct timeval time;
+
+    gettimeofday(&time, NULL);
+
+    return (unsigned long) (time.tv_sec) * 1000
+           + (unsigned long) (time.tv_usec) / 1000;
 }
