@@ -4,7 +4,7 @@ project(server)
 set(CMAKE_C_STANDARD 99)
 
 # sources
-set(SOURCE_FILES src/main/c/main.c src/main/c/server.c src/main/c/server.h src/main/c/message_buffer.c src/main/c/message_buffer.h src/main/c/protocol.h src/main/c/utils.c src/main/c/utils.h)
+set(SOURCE_FILES src/main/c/main.c src/main/c/server.c src/main/c/server.h src/main/c/message_buffer.c src/main/c/message_buffer.h src/main/c/protocol.h src/main/c/utils.c src/main/c/utils.h src/main/c/session.c src/main/c/session.h)
 add_executable(server-dist ${SOURCE_FILES})
 
 # allow pthreads

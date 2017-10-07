@@ -3,7 +3,7 @@
  * Socket server, handles multiple clients using threads.
  *
  * @author: Patrik Harag
- * @version: 2017-10-06
+ * @version: 2017-10-07
  */
 
 #include <stdbool.h>
@@ -18,11 +18,13 @@
 
 #include "server.h"
 #include "utils.h"
+#include "session.h"
 #include "message_buffer.h"
 #include "protocol.h"
 
 
-void *connection_handler(void *);
+void* connection_handler(void *);
+bool process_message(Session* session, char* type, char* content);
 
 int server_start(int port) {
     int socket_desc, client_socket, c, *new_socket;
@@ -80,16 +82,20 @@ int server_start(int port) {
 /**
  * This will handle connection for each client.
  */
-void* connection_handler(void *socket_desc) {
+void* connection_handler(void* socket_desc) {
     // Set up socket
-    int socket = *(int *) socket_desc;
+    int socket_fd = *(int *) socket_desc;
     char socket_buffer[SERVER_SOCKET_BUFFER_SIZE];
+
+    // Set up session
+    Session session;
+    session.socket_fd = socket_fd;
 
     // Set up timeout
     struct timeval timeout;
     timeout.tv_sec = SERVER_TIMEOUT / 1000;
     timeout.tv_usec = 0;
-    setsockopt(socket, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof(timeout));
+    setsockopt(socket_fd, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof(timeout));
 
     // Set up message buffer
     MessageBuffer message_buffer;
@@ -100,10 +106,10 @@ void* connection_handler(void *socket_desc) {
     unsigned long long last_client_activity = utils_current_millis();
     bool exit = false;
 
-    printf("  [%d] Listening...\n", socket);
+    printf("  [%d] Listening...\n", socket_fd);
 
     while (!exit) {
-        ssize_t recv_size = recv(socket, socket_buffer, SERVER_SOCKET_BUFFER_SIZE, 0);
+        ssize_t recv_size = recv(socket_fd, socket_buffer, SERVER_SOCKET_BUFFER_SIZE, 0);
         if (recv_size > 0) {
             last_client_activity = utils_current_millis();
 
@@ -115,17 +121,9 @@ void* connection_handler(void *socket_desc) {
                         message_buffer_add(&message_buffer, NULL);
 
                         char *type = message_buffer_get_type(&message_buffer);
-                        char *content = message_buffer_get_content(
-                                &message_buffer);
+                        char *content = message_buffer_get_content(&message_buffer);
 
-                        printf("  [%d] Message: type='%s' content='%s'\n",
-                               socket, type, content);
-                        fflush(stdout);
-
-                        if (strncmp(type, "BYE", 3) == 0) {
-                            exit = true;
-                            break;
-                        }
+                        exit |= process_message(&session, type, content);
 
                         // reset buffer
                         message_buffer.index = 0;
@@ -141,7 +139,7 @@ void* connection_handler(void *socket_desc) {
             }
         } else if (recv_size == -1) {
             if ((errno != EAGAIN) && (errno != EWOULDBLOCK)) {
-                printf("  [%d] Error", socket);
+                printf("  [%d] Error", socket_fd);
                 perror("");
             }
             exit = true;
@@ -152,19 +150,30 @@ void* connection_handler(void *socket_desc) {
 
         unsigned long long diff = utils_current_millis() - last_client_activity;
         if (diff > SERVER_TIMEOUT) {
-            printf("  [%d] Timeout (after %llu ms)\n", socket, diff);
+            printf("  [%d] Timeout (after %llu ms)\n", socket_fd, diff);
             exit = true;
         }
     }
 
     // write(sock, message, strlen(message));
 
-    printf("  [%d] Client disconnected\n", socket);
+    printf("  [%d] Client disconnected\n", socket_fd);
     fflush(stdout);
 
     free(socket_desc);
     free(message_buffer.content);
 
-    close(socket);
+    close(socket_fd);
     return 0;
+}
+
+bool process_message(Session* session, char* type, char* content) {
+    printf("  [%d] Message: type='%s' content='%s'\n",
+           session->socket_fd, type, content);
+    fflush(stdout);
+
+    if (strncmp(type, "BYE", 3) == 0) {
+        return true;
+    }
+    return false;
 }
