@@ -8,7 +8,6 @@
 
 #include <stdbool.h>
 #include <stdio.h>
-#include <string.h>
 #include <stdlib.h>
 #include <sys/socket.h>
 #include <arpa/inet.h>
@@ -19,12 +18,11 @@
 #include "server.h"
 #include "utils.h"
 #include "session.h"
-#include "message_buffer.h"
 #include "protocol.h"
+#include "controller.h"
 
 
-void* connection_handler(void *);
-bool process_message(Session* session, char* type, char* content);
+static void* connection_handler(void *);
 
 int server_start(int port) {
     int socket_desc, client_socket, c, *new_socket;
@@ -89,7 +87,7 @@ void* connection_handler(void* socket_desc) {
 
     // Set up session
     Session session;
-    session.socket_fd = socket_fd;
+    session_init(&session, socket_fd);
 
     // Set up timeout
     struct timeval timeout;
@@ -98,10 +96,8 @@ void* connection_handler(void* socket_desc) {
     setsockopt(socket_fd, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof(timeout));
 
     // Set up message buffer
-    MessageBuffer message_buffer;
-    message_buffer.index = 0;
-    message_buffer.content_length = SERVER_MSG_BUFFER_SIZE;
-    message_buffer.content = malloc(SERVER_MSG_BUFFER_SIZE);
+    Buffer message_buffer;
+    buffer_init(&message_buffer, SERVER_MSG_BUFFER_SIZE);
 
     unsigned long long last_client_activity = utils_current_millis();
     bool exit = false;
@@ -109,6 +105,18 @@ void* connection_handler(void* socket_desc) {
     printf("  [%d] Listening...\n", socket_fd);
 
     while (!exit) {
+        // write
+        if (session.to_send.index > 0) {
+            // TODO: exceptions handling
+            write(socket_fd, session.to_send.content, session.to_send.index);
+
+            printf("  [%d] << %d B\n", socket_fd, (int) session.to_send.index);
+            fflush(stdout);
+
+            buffer_reset(&(session.to_send));
+        }
+
+        // read
         ssize_t recv_size = recv(socket_fd, socket_buffer, SERVER_SOCKET_BUFFER_SIZE, 0);
         if (recv_size > 0) {
             last_client_activity = utils_current_millis();
@@ -118,7 +126,7 @@ void* connection_handler(void* socket_desc) {
                 if (c == PROTOCOL_MESSAGE_SEP) {
                     // end of message
                     if (message_buffer.index != 0) {
-                        message_buffer_add(&message_buffer, NULL);
+                        buffer_add(&message_buffer, NULL);
 
                         char *type = message_buffer_get_type(&message_buffer);
                         char *content = message_buffer_get_content(&message_buffer);
@@ -126,15 +134,15 @@ void* connection_handler(void* socket_desc) {
                         exit |= process_message(&session, type, content);
 
                         // reset buffer
-                        message_buffer.index = 0;
+                        buffer_reset(&message_buffer);
                     }
                 } else {
                     if (message_buffer.index == PROTOCOL_TYPE_SIZE) {
                         // divide message type and its content
-                        message_buffer_add(&message_buffer, NULL);
+                        buffer_add(&message_buffer, NULL);
                     }
 
-                    message_buffer_add(&message_buffer, socket_buffer[i]);
+                    buffer_add(&message_buffer, socket_buffer[i]);
                 }
             }
         } else if (recv_size == -1) {
@@ -145,7 +153,7 @@ void* connection_handler(void* socket_desc) {
             exit = true;
         } else {
             // no data...
-            utils_sleep(100);
+            utils_sleep(100);  // TODO: dynamic sleep
         }
 
         unsigned long long diff = utils_current_millis() - last_client_activity;
@@ -155,25 +163,14 @@ void* connection_handler(void* socket_desc) {
         }
     }
 
-    // write(sock, message, strlen(message));
-
     printf("  [%d] Client disconnected\n", socket_fd);
     fflush(stdout);
 
-    free(socket_desc);
-    free(message_buffer.content);
-
     close(socket_fd);
+
+    session_free(&session);
+    buffer_free(&message_buffer);
+    free(socket_desc);
+
     return 0;
-}
-
-bool process_message(Session* session, char* type, char* content) {
-    printf("  [%d] Message: type='%s' content='%s'\n",
-           session->socket_fd, type, content);
-    fflush(stdout);
-
-    if (strncmp(type, "BYE", 3) == 0) {
-        return true;
-    }
-    return false;
 }

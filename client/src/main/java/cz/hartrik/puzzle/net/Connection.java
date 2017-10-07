@@ -1,13 +1,16 @@
 package cz.hartrik.puzzle.net;
 
+import cz.hartrik.common.Exceptions;
 import java.io.*;
 import java.net.Socket;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Future;
 
 /**
  * @author Patrik Harag
- * @version 2017-10-03
+ * @version 2017-10-07
  */
 public class Connection implements AutoCloseable {
 
@@ -18,8 +21,11 @@ public class Connection implements AutoCloseable {
     private final int port;
 
     private Socket socket;
-    private Reader reader;
-    private Writer writer;
+
+    private ReaderThread reader;
+    private WriterThread writer;
+
+    private volatile Exception exception;
 
     Connection(String host, int port) {
         this.host = host;
@@ -27,26 +33,69 @@ public class Connection implements AutoCloseable {
     }
 
     void connect() throws IOException {
+        this.exception = null;
         this.socket = new Socket(host, port);
 
-        // create streams for reading and writing
-        this.reader = new InputStreamReader(socket.getInputStream(), CHARSET);
-        this.writer = new OutputStreamWriter(socket.getOutputStream(), CHARSET);
+        this.reader = new ReaderThread(socket.getInputStream(), CHARSET, this::onException);
+        this.writer = new WriterThread(socket.getOutputStream(), CHARSET, this::onException);
+
+        reader.start();
+        writer.start();
     }
 
-    private void msg(String type, String content) throws IOException {
+    private void onException(Exception e) {
+        if (exception != null) return;  // exception from second thread...
+
+        this.exception = e;
+        e.printStackTrace();
+        Exceptions.silent(this::closeNow);
+    }
+
+    private void msg(String type, String content) throws Exception {
+        if (exception != null)
+            throw exception;
+
         // TODO: escaping
-        writer.write(String.format("|%s%s|", type, content));
-        writer.flush();
+        writer.send(String.format("|%s%s|", type, content));
     }
 
-    public void login(String nick) throws IOException {
+    public void sendLogin(String nick) throws Exception {
         msg("LOG", nick);
     }
 
+    public Future<String> sendNewGame() throws Exception {
+        CompletableFuture<String> future = new CompletableFuture<>();
+        reader.addConsumer("GAM", MessageConsumer.temporary(future::complete));
+
+        msg("NEW", "");
+
+        return future;
+    }
+
+    /**
+     * Closes connection, blocks.
+     */
     @Override
-    public void close() throws IOException {
-        msg("BYE", "");
+    public void close() throws Exception {
+        if (exception == null) {
+            msg("BYE", "");
+            closeNow();
+
+            if (exception != null) {
+                // exception occurred
+                throw exception;
+            }
+        } else {
+            // closed already
+        }
+    }
+
+    private void closeNow() throws Exception {
+        writer.close();
+        reader.close();
+
+        Exceptions.silent(() -> writer.join(500));
+        Exceptions.silent(() -> reader.join(500));
 
         socket.close();
     }
