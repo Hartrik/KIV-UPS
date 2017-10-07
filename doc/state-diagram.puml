@@ -1,0 +1,22 @@
+@startuml
+title Session (client view)
+
+[*] --> connected
+
+state "Connected" as connected
+connected --> logged:LOG
+connected --> not_connected:BYE*
+
+state "Logged" as logged
+logged --> not_connected:BYE*
+logged --> game:NEW,\nPLY
+logged --> logged:LIS
+
+state "In game" as game
+game --> not_connected:BYE*
+game --> logged:OFF
+game --> game:MOV
+
+state "Disconnected" as not_connected
+not_connected --> [*]
+@enduml
