@@ -4,18 +4,19 @@ title Session (client view)
 [*] --> connected
 
 state "Connected" as connected
-connected --> logged:LOG
+connected --> logged:LIN
 connected --> not_connected:BYE*
 
 state "Logged" as logged
 logged --> not_connected:BYE*
-logged --> game:NEW,\nPLY
-logged --> logged:LIS
+logged --> game:GNW,\nGIN
+logged --> logged:GLI
+logged --> connected:LOF
 
 state "In game" as game
 game --> not_connected:BYE*
-game --> logged:OFF
-game --> game:MOV
+game --> logged:GOF
+game --> game:GMV
 
 state "Disconnected" as not_connected
 not_connected --> [*]

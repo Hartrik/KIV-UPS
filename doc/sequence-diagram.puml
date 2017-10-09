@@ -2,37 +2,41 @@
 
 == Logging ==
 
-Client -> Server: LOG
-Client <-- Server: LOG (success / failure)
+Client -> Server: LIN
+Client <-- Server: LIN (success / failure)
 
 == Getting list of games ==
 
-Client -> Server: LIS
-Client <-- Server: LIS (list of games)
+Client -> Server: GLI
+Client <-- Server: GLI (list of games)
 
 == Creating/Joining game ==
 
-Client -> Server: NEW (setting) | PLY (game ID)
+Client -> Server: GNW (setting) | GIN (game ID)
 Client <-- Server: GAM (game ID)
 
 == Playing game ==
 
 ...retrieving game data...
 
-Client <-- Server: MOV (game ID, piece, x, y)
+Client <-- Server: GMV (game ID, piece, x, y)
 
 ...user actions\nand other players actions...
 
-Client --> Server: MOV (game ID, piece, x, y)
-Client <-- Server: MOV (game ID, piece, x, y)
+Client --> Server: GMV (game ID, piece, x, y)
+Client <-- Server: GMV (game ID, piece, x, y)
 
 ...eventually...
 
-Client <-- Server: WIN (game ID)
+Client <-- Server: GWI (game ID)
 
 ...exit game...
 
-Client -> Server: OFF
+Client -> Server: GOF
+
+...log out...
+
+Client -> Server: LOF
 
 ...close connection...
 
