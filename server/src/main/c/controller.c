@@ -2,7 +2,7 @@
 /**
  *
  * @author: Patrik Harag
- * @version: 2017-10-07
+ * @version: 2017-10-09
  */
 
 #include <stdio.h>
@@ -12,6 +12,7 @@
 #include "controller.h"
 #include "protocol.h"
 #include "game_pool.h"
+#include "utils.h"
 
 bool process_message(Session* session, char* type, char* content) {
     printf("  [%d] Message: type='%s' content='%s'\n",
@@ -24,8 +25,20 @@ bool process_message(Session* session, char* type, char* content) {
     } else if (strncmp(type, "NOP", 3) == 0) {
         // nothing
 
-    } else if (strncmp(type, "LOG", 3) == 0) {
-        // TODO: login
+    } else if (strncmp(type, "LIN", 3) == 0) {
+        char* name = content;
+
+        if (session_is_logged(session)) {
+            controller_send_int(session, "LIN", PROTOCOL_LIN_ERR_ALREADY_LOGGED);
+        } else if (strlen(name) > SESSION_PLAYER_MAX_NAME_LENGTH) {
+            controller_send_int(session, "LIN", PROTOCOL_LIN_ERR_NAME_TOO_LONG);
+        } else if (!utils_is_valid_name(name)) {
+            controller_send_int(session, "LIN", PROTOCOL_LIN_ERR_UNSUPPORTED_CHARS);
+        } else {
+            // TODO: uživatelé se stejnými jmény
+            strcpy(session->name, name);
+            controller_send_int(session, "LIN", PROTOCOL_LIN_OK);
+        }
 
     } else if (strncmp(type, "NEW", 3) == 0) {
         Game* game = gp_create_game(content);

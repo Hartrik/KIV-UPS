@@ -126,7 +126,7 @@ void* connection_handler(void* socket_desc) {
                 if (c == PROTOCOL_MESSAGE_SEP) {
                     // end of message
                     if (message_buffer.index != 0) {
-                        buffer_add(&message_buffer, NULL);
+                        buffer_add(&message_buffer, 0);
 
                         char *type = message_buffer_get_type(&message_buffer);
                         char *content = message_buffer_get_content(&message_buffer);
@@ -139,7 +139,7 @@ void* connection_handler(void* socket_desc) {
                 } else {
                     if (message_buffer.index == PROTOCOL_TYPE_SIZE) {
                         // divide message type and its content
-                        buffer_add(&message_buffer, NULL);
+                        buffer_add(&message_buffer, 0);
                     }
 
                     buffer_add(&message_buffer, socket_buffer[i]);

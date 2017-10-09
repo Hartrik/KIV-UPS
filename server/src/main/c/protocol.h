@@ -2,7 +2,7 @@
 /**
  *
  * @author: Patrik Harag
- * @version: 2017-10-03
+ * @version: 2017-10-09
  */
 
 #ifndef SERVER_PROTOCOL_H
@@ -10,5 +10,10 @@
 
 #define PROTOCOL_MESSAGE_SEP 124  /* | */
 #define PROTOCOL_TYPE_SIZE 3
+
+#define PROTOCOL_LIN_OK 0
+#define PROTOCOL_LIN_ERR_ALREADY_LOGGED 1
+#define PROTOCOL_LIN_ERR_NAME_TOO_LONG 2
+#define PROTOCOL_LIN_ERR_UNSUPPORTED_CHARS 3
 
 #endif

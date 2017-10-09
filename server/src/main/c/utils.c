@@ -2,13 +2,15 @@
 /**
  *
  * @author: Patrik Harag
- * @version: 2017-10-06
+ * @version: 2017-10-09
  */
 
 #include <time.h>
 #include <stdio.h>
 #include <errno.h>
 #include <sys/time.h>
+#include <memory.h>
+#include <ctype.h>
 #include "utils.h"
 
 int utils_sleep(unsigned long ms) {
@@ -39,3 +41,14 @@ unsigned long long utils_current_millis() {
     return (unsigned long) (time.tv_sec) * 1000
            + (unsigned long) (time.tv_usec) / 1000;
 }
+
+bool utils_is_valid_name(char* string) {
+    size_t len = strlen(string);
+    for (int i = 0; i < len; ++i) {
+        char c = string[i];
+        if (!(isalpha(c) || isdigit(c)))
+           return false;
+    }
+    return true;
+}
+

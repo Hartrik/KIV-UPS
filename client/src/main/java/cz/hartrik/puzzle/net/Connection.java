@@ -1,6 +1,7 @@
 package cz.hartrik.puzzle.net;
 
 import cz.hartrik.common.Exceptions;
+import cz.hartrik.puzzle.net.protocol.LogInResponse;
 import java.io.*;
 import java.net.Socket;
 import java.nio.charset.Charset;
@@ -10,7 +11,7 @@ import java.util.concurrent.Future;
 
 /**
  * @author Patrik Harag
- * @version 2017-10-07
+ * @version 2017-10-09
  */
 public class Connection implements AutoCloseable {
 
@@ -59,8 +60,19 @@ public class Connection implements AutoCloseable {
         writer.send(String.format("|%s%s|", type, content));
     }
 
-    public void sendLogin(String nick) throws Exception {
-        msg("LOG", nick);
+    public void sendNop() throws Exception {
+        msg("NOP", "");
+    }
+
+    public Future<LogInResponse> sendLogin(String nick) throws Exception {
+        CompletableFuture<LogInResponse> future = new CompletableFuture<>();
+        reader.addConsumer("LIN", MessageConsumer.temporary(response -> {
+            future.complete(LogInResponse.parse(response));
+        }));
+
+        msg("LIN", nick);
+
+        return future;
     }
 
     public Future<String> sendNewGame() throws Exception {
