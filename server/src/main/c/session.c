@@ -2,12 +2,11 @@
 /**
  *
  * @author: Patrik Harag
- * @version: 2017-10-09
+ * @version: 2017-10-10
  */
 
 #include <stdlib.h>
 #include <memory.h>
-#include <assert.h>
 #include "session.h"
 
 void session_init(Session *session, int socket_fd) {
@@ -26,6 +25,5 @@ bool session_is_logged(Session* session) {
 }
 
 bool session_is_in_game(Session* session) {
-    assert(session_is_logged(session));
-    return session->game != NULL;
+    return session_is_logged(session) && session->game != NULL;
 }

@@ -1,10 +1,12 @@
 package cz.hartrik.puzzle;
 
+import cz.hartrik.puzzle.page.Page;
 import cz.hartrik.puzzle.service.ServiceManager;
+import javafx.application.Platform;
 
 /**
  *
- * @version 2017-09-28
+ * @version 2017-10-10
  * @author Patrik Harag
  */
 public class Application {
@@ -29,5 +31,12 @@ public class Application {
 
     public ServiceManager getServiceManager() {
         return serviceManager;
+    }
+
+    public void setActivePage(Page activePage) {
+        if (Platform.isFxApplicationThread())
+            getController().setActivePage(activePage);
+        else
+            Platform.runLater(() -> getController().setActivePage(activePage));
     }
 }

@@ -3,11 +3,11 @@ package cz.hartrik.puzzle.page;
 import cz.hartrik.common.Exceptions;
 import cz.hartrik.puzzle.Application;
 import cz.hartrik.puzzle.net.Connection;
+import cz.hartrik.puzzle.net.ConnectionHolder;
 import cz.hartrik.puzzle.net.ConnectionProvider;
 import cz.hartrik.puzzle.net.protocol.LogInResponse;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
-import javafx.application.Platform;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.Label;
@@ -66,32 +66,29 @@ public class LogInPage implements Page {
     private void apply(String name) {
         application.getController().setActivePage(new LoadingPage());
 
-        Thread thread = new Thread(() -> {
-            try {
-                Thread.sleep(500);  // TODO
+        Connection connection = ConnectionProvider.lazyConnect();
+        ConnectionHolder holder = new ConnectionHolder(connection);
 
-                Connection connect = ConnectionProvider.connect();
-                Future<LogInResponse> future = connect.sendLogin(name);
-                LogInResponse response = future.get(2000, TimeUnit.MILLISECONDS);
+        holder.async(c -> {
+            Thread.sleep(500);  // TODO
 
-                if (response != LogInResponse.OK) {
-                    Exceptions.silent(connect::close);
-                    Platform.runLater(() -> onError("Error when logging in: " + response));
-                } else {
-                    Page page = new MenuPage(application, this, connect);
-                    Platform.runLater(() -> application.getController().setActivePage(page));
-                }
+            Future<LogInResponse> future = c.sendLogIn(name);
+            LogInResponse response = future.get(2000, TimeUnit.MILLISECONDS);
 
-            } catch (Exception e) {
-                Platform.runLater(() -> onError(e.toString()));
+            if (response != LogInResponse.OK) {
+                Exceptions.silent(c::close);
+                throw new RuntimeException("Error when logging in: " + response);
+            } else {
+                Page page = new MenuPage(application, this, holder);
+                application.setActivePage(page);
             }
-        });
-        thread.start();
+
+        }, this::onError);
     }
 
-    private void onError(String errorMessage) {
-        Page errorPage = new ErrorPage(application, this, errorMessage);
-        application.getController().setActivePage(errorPage);
+    private void onError(Exception e) {
+        Page errorPage = new ErrorPage(application, this, e.toString());
+        application.setActivePage(errorPage);
     }
 
 }

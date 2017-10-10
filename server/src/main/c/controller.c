@@ -2,7 +2,7 @@
 /**
  *
  * @author: Patrik Harag
- * @version: 2017-10-09
+ * @version: 2017-10-10
  */
 
 #include <stdio.h>
@@ -38,7 +38,16 @@ bool process_message(Session* session, char* type, char* content) {
             // TODO: uživatelé se stejnými jmény
             strcpy(session->name, name);
             controller_send_int(session, "LIN", PROTOCOL_LIN_OK);
-            printf("  [%d] User logged in: %s\n", session->socket_fd, session->name);
+            printf("  [%d] - User logged in: %s\n", session->socket_fd, session->name);
+        }
+
+    } else if (strncmp(type, "LOF", 3) == 0) {
+        if (session_is_in_game(session)) {
+            controller_send_int(session, "LOF", PROTOCOL_LOF_IN_GAME);
+        } else {
+            session->name[0] = 0;
+            controller_send_int(session, "LOF", PROTOCOL_LOF_OK);
+            printf("  [%d] - User logged out", session->socket_fd);
         }
 
     } else if (strncmp(type, "NEW", 3) == 0) {
@@ -48,7 +57,7 @@ bool process_message(Session* session, char* type, char* content) {
         controller_send_int(session, "GAM", game == NULL ? -1 : game->id);
 
     } else {
-        printf("  [%d] Unknown command: %s\n", session->socket_fd, type);
+        printf("  [%d] - Unknown command: %s\n", session->socket_fd, type);
     }
 
     return false;

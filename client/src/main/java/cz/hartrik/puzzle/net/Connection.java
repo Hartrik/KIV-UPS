@@ -2,6 +2,7 @@ package cz.hartrik.puzzle.net;
 
 import cz.hartrik.common.Exceptions;
 import cz.hartrik.puzzle.net.protocol.LogInResponse;
+import cz.hartrik.puzzle.net.protocol.LogOutResponse;
 import java.io.*;
 import java.net.Socket;
 import java.nio.charset.Charset;
@@ -11,7 +12,7 @@ import java.util.concurrent.Future;
 
 /**
  * @author Patrik Harag
- * @version 2017-10-09
+ * @version 2017-10-10
  */
 public class Connection implements AutoCloseable {
 
@@ -20,6 +21,7 @@ public class Connection implements AutoCloseable {
 
     private final String host;
     private final int port;
+    private boolean connected;
 
     private Socket socket;
 
@@ -33,7 +35,10 @@ public class Connection implements AutoCloseable {
         this.port = port;
     }
 
-    void connect() throws IOException {
+    synchronized void connect() throws IOException {
+        if (connected) return;  // already connected
+        this.connected = true;
+
         this.exception = null;
         this.socket = new Socket(host, port);
 
@@ -61,10 +66,14 @@ public class Connection implements AutoCloseable {
     }
 
     public void sendNop() throws Exception {
+        connect();
+
         msg("NOP", "");
     }
 
-    public Future<LogInResponse> sendLogin(String nick) throws Exception {
+    public Future<LogInResponse> sendLogIn(String nick) throws Exception {
+        connect();
+
         CompletableFuture<LogInResponse> future = new CompletableFuture<>();
         reader.addConsumer("LIN", MessageConsumer.temporary(response -> {
             future.complete(LogInResponse.parse(response));
@@ -75,7 +84,22 @@ public class Connection implements AutoCloseable {
         return future;
     }
 
+    public Future<LogOutResponse> sendLogOut() throws Exception {
+        connect();
+
+        CompletableFuture<LogOutResponse> future = new CompletableFuture<>();
+        reader.addConsumer("LOF", MessageConsumer.temporary(response -> {
+            future.complete(LogOutResponse.parse(response));
+        }));
+
+        msg("LOF", "");
+
+        return future;
+    }
+
     public Future<String> sendNewGame() throws Exception {
+        connect();
+
         CompletableFuture<String> future = new CompletableFuture<>();
         reader.addConsumer("GAM", MessageConsumer.temporary(future::complete));
 
@@ -88,8 +112,10 @@ public class Connection implements AutoCloseable {
      * Closes connection, blocks.
      */
     @Override
-    public void close() throws Exception {
-        if (exception == null) {
+    public synchronized void close() throws Exception {
+        if (exception != null || !connected) {
+            // closed already
+        } else {
             msg("BYE", "");
             closeNow();
 
@@ -97,8 +123,6 @@ public class Connection implements AutoCloseable {
                 // exception occurred
                 throw exception;
             }
-        } else {
-            // closed already
         }
     }
 

@@ -3,6 +3,7 @@ package cz.hartrik.puzzle;
 import cz.hartrik.puzzle.page.Page;
 import java.net.URL;
 import java.util.ResourceBundle;
+import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.layout.StackPane;

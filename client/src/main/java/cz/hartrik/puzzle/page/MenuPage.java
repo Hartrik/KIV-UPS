@@ -1,7 +1,8 @@
 package cz.hartrik.puzzle.page;
 
 import cz.hartrik.puzzle.Application;
-import cz.hartrik.puzzle.net.Connection;
+import cz.hartrik.puzzle.net.ConnectionHolder;
+import java.util.concurrent.TimeUnit;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.Button;
@@ -20,9 +21,9 @@ public class MenuPage implements Page {
 
     private final Application application;
     private final Page previousPage;
-    private final Connection connection;
+    private final ConnectionHolder connection;
 
-    public MenuPage(Application application, Page previousPage, Connection connection) {
+    public MenuPage(Application application, Page previousPage, ConnectionHolder connection) {
         this.application = application;
         this.previousPage = previousPage;
         this.connection = connection;
@@ -47,14 +48,27 @@ public class MenuPage implements Page {
         bJoin.setDisable(true);
 
         Button bLogOut = new Button("Log out");
-        bLogOut.setOnAction(event -> {});
+        bLogOut.setOnAction(event -> onLogOut());
         bLogOut.setPrefWidth(100);
-        bLogOut.setDisable(true);
 
         VBox box = new VBox(title, dummy, bNew, bJoin, bLogOut);
         box.setAlignment(Pos.CENTER);
         box.setSpacing(10);
         return box;
+    }
+
+    private void onLogOut() {
+        application.setActivePage(new LoadingPage());
+        connection.async(
+            c -> {
+                c.sendLogOut().get(2000, TimeUnit.MILLISECONDS);
+                application.setActivePage(previousPage);
+            },
+            e -> {
+                /* errors ignored... */
+                application.setActivePage(previousPage);
+            }
+        );
     }
 
 }
