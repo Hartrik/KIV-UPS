@@ -45,7 +45,7 @@ public class WriterThread extends Thread {
         writer.write(data);
         writer.flush();
 
-        System.out.println("<-- " + data);
+        System.out.println("--> " + data);
     }
 
     public void send(String data) {

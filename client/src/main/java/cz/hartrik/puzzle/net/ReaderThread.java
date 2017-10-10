@@ -55,7 +55,7 @@ public class ReaderThread extends Thread {
     }
 
     private void processMessage(String data) {
-        System.out.println("--> " + data);
+        System.out.println("<-- " + data);
 
         if (data.length() < 3) {
             System.err.println("Message too short: " + data);

@@ -1,5 +1,6 @@
 package cz.hartrik.puzzle.page;
 
+import cz.hartrik.common.Exceptions;
 import cz.hartrik.puzzle.Application;
 import cz.hartrik.puzzle.net.ConnectionHolder;
 import java.util.concurrent.TimeUnit;
@@ -62,13 +63,18 @@ public class MenuPage implements Page {
         connection.async(
             c -> {
                 c.sendLogOut().get(2000, TimeUnit.MILLISECONDS);
-                application.setActivePage(previousPage);
+                logOut();
             },
             e -> {
                 /* errors ignored... */
-                application.setActivePage(previousPage);
+                logOut();
             }
         );
+    }
+
+    private void logOut() {
+        application.setActivePage(previousPage);
+        Exceptions.silent(connection::close);
     }
 
 }

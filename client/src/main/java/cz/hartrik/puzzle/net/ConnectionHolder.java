@@ -1,5 +1,6 @@
 package cz.hartrik.puzzle.net;
 
+import cz.hartrik.common.Exceptions;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -38,7 +39,10 @@ public class ConnectionHolder implements AutoCloseable {
 
     @Override
     public void close() throws Exception {
-        executor.awaitTermination(2000, TimeUnit.MILLISECONDS);
+        Exceptions.silent(() -> {
+            executor.awaitTermination(500, TimeUnit.MILLISECONDS);
+        });
+        connection.close();
     }
 
 }
