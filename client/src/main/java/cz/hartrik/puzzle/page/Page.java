@@ -4,12 +4,14 @@ import javafx.scene.Node;
 
 /**
  * @author Patrik Harag
- * @version 2017-10-03
+ * @version 2017-10-10
  */
 public interface Page {
 
     Node getNode();
 
-    void onShow();
+    default void onShow() {
+
+    }
 
 }

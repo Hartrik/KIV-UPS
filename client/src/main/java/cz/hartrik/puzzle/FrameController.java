@@ -10,7 +10,7 @@ import javafx.stage.Stage;
 
 /**
  *
- * @version 2017-10-03
+ * @version 2017-10-09
  * @author Patrik Harag
  */
 public class FrameController implements Initializable {
@@ -20,6 +20,9 @@ public class FrameController implements Initializable {
     private Page activePage;
 
     public void setActivePage(Page activePage) {
+        if (this.activePage != null)
+            getRootPane().getChildren().remove(0);
+
         this.activePage = activePage;
         getRootPane().getChildren().add(0, activePage.getNode());
         activePage.onShow();

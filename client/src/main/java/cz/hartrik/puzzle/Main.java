@@ -3,7 +3,7 @@ package cz.hartrik.puzzle;
 
 import cz.hartrik.common.io.Resources;
 import cz.hartrik.puzzle.module.ModuleConsole;
-import cz.hartrik.puzzle.page.game.PuzzlePage;
+import cz.hartrik.puzzle.page.LogInPage;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintWriter;
@@ -17,7 +17,7 @@ import javafx.stage.Stage;
 /**
  * The main class.
  *
- * @version 2017-09-28
+ * @version 2017-10-10
  * @author Patrik Harag
  */
 public class Main extends javafx.application.Application {
@@ -48,9 +48,9 @@ public class Main extends javafx.application.Application {
         );
 
         frameStage = app.getStage();
+        frameStage.setTitle(APP_TITLE);
         frameStage.getIcons().add(Resources.image(ICON, Main.class));
-
-        frameStage.getFrameController().setActivePage(new PuzzlePage());
+        frameStage.getFrameController().setActivePage(new LogInPage(app));
 
         frameStage.show();
     }
