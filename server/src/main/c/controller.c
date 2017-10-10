@@ -38,6 +38,7 @@ bool process_message(Session* session, char* type, char* content) {
             // TODO: uživatelé se stejnými jmény
             strcpy(session->name, name);
             controller_send_int(session, "LIN", PROTOCOL_LIN_OK);
+            printf("  [%d] User logged in: %s\n", session->socket_fd, session->name);
         }
 
     } else if (strncmp(type, "NEW", 3) == 0) {
