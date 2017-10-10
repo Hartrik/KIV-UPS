@@ -51,6 +51,7 @@ public class ModuleConsole implements ApplicationModule {
         box.getStyleClass().add("console-box");
         box.getChildren().addAll(input = createInput(app), createConsole());
         box.translateYProperty().bind(rootPane.heightProperty().subtract(pos));
+        box.setVisible(false);
 
         addSlideHandlers(pos, box, app);
         rootPane.getChildren().add(box);
