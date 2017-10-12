@@ -2,7 +2,7 @@
 /**
  *
  * @author: Patrik Harag
- * @version: 2017-10-09
+ * @version: 2017-10-12
  */
 
 #ifndef SERVER_SESSION_H
@@ -13,6 +13,7 @@
 #include "buffer.h"
 
 #define SESSION_BUFFER_DEFAULT_CAPACITY 8
+#define SESSION_PLAYER_MIN_NAME_LENGTH 1
 #define SESSION_PLAYER_MAX_NAME_LENGTH 12
 
 typedef struct _Session {

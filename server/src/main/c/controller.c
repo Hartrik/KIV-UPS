@@ -30,6 +30,8 @@ bool process_message(Session* session, char* type, char* content) {
 
         if (session_is_logged(session)) {
             controller_send_int(session, "LIN", PROTOCOL_LIN_ERR_ALREADY_LOGGED);
+        } else if (name == NULL || strlen(name) < SESSION_PLAYER_MIN_NAME_LENGTH) {
+            controller_send_int(session, "LIN", PROTOCOL_LIN_ERR_NAME_TOO_SHORT);
         } else if (strlen(name) > SESSION_PLAYER_MAX_NAME_LENGTH) {
             controller_send_int(session, "LIN", PROTOCOL_LIN_ERR_NAME_TOO_LONG);
         } else if (!utils_is_valid_name(name)) {
