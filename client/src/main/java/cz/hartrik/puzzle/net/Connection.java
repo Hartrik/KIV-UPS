@@ -57,18 +57,26 @@ public class Connection implements AutoCloseable {
         Exceptions.silent(this::closeNow);
     }
 
-    private void msg(String type, String content) throws Exception {
+    private void send(String content) throws Exception {
         if (exception != null)
             throw exception;
 
         // TODO: escaping
-        writer.send(String.format("|%s%s|", type, content));
+        writer.send(content);
+    }
+
+    void sendMessage(String type, String content) throws Exception {
+        send(String.format("|%s%s|", type, content));
+    }
+
+    void sendRaw(String data) throws Exception {
+        send(String.format("|%s|", data));
     }
 
     public void sendNop() throws Exception {
         connect();
 
-        msg("NOP", "");
+        sendMessage("NOP", "");
     }
 
     public Future<LogInResponse> sendLogIn(String nick) throws Exception {
@@ -79,7 +87,7 @@ public class Connection implements AutoCloseable {
             future.complete(LogInResponse.parse(response));
         }));
 
-        msg("LIN", nick);
+        sendMessage("LIN", nick);
 
         return future;
     }
@@ -92,7 +100,7 @@ public class Connection implements AutoCloseable {
             future.complete(LogOutResponse.parse(response));
         }));
 
-        msg("LOF", "");
+        sendMessage("LOF", "");
 
         return future;
     }
@@ -103,7 +111,7 @@ public class Connection implements AutoCloseable {
         CompletableFuture<String> future = new CompletableFuture<>();
         reader.addConsumer("GAM", MessageConsumer.temporary(future::complete));
 
-        msg("NEW", "");
+        sendMessage("NEW", "");
 
         return future;
     }
@@ -116,7 +124,7 @@ public class Connection implements AutoCloseable {
         if (exception != null || !connected) {
             // closed already
         } else {
-            msg("BYE", "");
+            sendMessage("BYE", "");
             closeNow();
 
             if (exception != null) {
