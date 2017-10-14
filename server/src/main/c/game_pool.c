@@ -28,9 +28,10 @@ void gp_init(GamePool* game_pool) {
 
 Game *gp_create_game(GamePool *game_pool, unsigned int w, unsigned int h) {
     Game* game = (Game *) calloc(1, sizeof(Game));
-    game->id = ++game_pool->last_id;
-    game->w = w;
-    game->h = h;
+    game_init(game, ++game_pool->last_id, w, h);
+    game_shuffle(game,
+                 (int) (game->h * GAME_PIECE_SIZE * GAME_SHUFFLE_MULTIPIER / 2),
+                 (int) (game->w * GAME_PIECE_SIZE * GAME_SHUFFLE_MULTIPIER / 2));
 
     game_pool->games_size++;
     ensure_capacity(game_pool);
@@ -45,6 +46,7 @@ void gp_free(GamePool* game_pool) {
         for (i = 0; i < game_pool->games_size; i++) {
             Game *entry = game_pool->games[i];
 
+            game_free(entry);
             free(entry);
         }
 
