@@ -24,7 +24,7 @@ typedef struct _GamePool {
 } GamePool;
 
 void gp_init(GamePool* game_pool);
-Game *gp_create_game(GamePool* game_pool, char *string);
+Game *gp_create_game(GamePool *game_pool, unsigned int w, unsigned int h);
 void gp_free(GamePool* game_pool);
 
 #endif

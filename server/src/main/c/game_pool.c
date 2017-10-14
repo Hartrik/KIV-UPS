@@ -26,9 +26,11 @@ void gp_init(GamePool* game_pool) {
     gp_free(game_pool);
 }
 
-Game *gp_create_game(GamePool* game_pool, char* settings) {
+Game *gp_create_game(GamePool *game_pool, unsigned int w, unsigned int h) {
     Game* game = (Game *) calloc(1, sizeof(Game));
     game->id = ++game_pool->last_id;
+    game->w = w;
+    game->h = h;
 
     game_pool->games_size++;
     ensure_capacity(game_pool);

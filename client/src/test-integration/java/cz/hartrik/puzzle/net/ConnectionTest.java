@@ -3,6 +3,8 @@ package cz.hartrik.puzzle.net;
 import cz.hartrik.common.Exceptions;
 import cz.hartrik.puzzle.net.protocol.LogInResponse;
 import cz.hartrik.puzzle.net.protocol.LogOutResponse;
+import java.util.Arrays;
+import java.util.List;
 import java.util.concurrent.Future;
 import org.junit.Test;
 
@@ -15,7 +17,7 @@ import static org.hamcrest.CoreMatchers.*;
  */
 public class ConnectionTest {
 
-    private static final int DEFAULT_TIMEOUT = 500;
+    private static final int DEFAULT_TIMEOUT = 1000;
 
     // GENERAL
 
@@ -124,8 +126,32 @@ public class ConnectionTest {
             Future<LogInResponse> response = connection.sendLogIn("Nick");
             assertThat(response.get(), is(LogInResponse.OK));
 
-            Future<String> game = connection.sendNewGame();
+            Future<String> game = connection.sendNewGame(10, 5);
             assertThat(game.get().matches("[0-9]+"), is(true));
+        }
+    }
+
+    @Test(timeout = DEFAULT_TIMEOUT)
+    public void testNewGameWrongFormat() throws Exception {
+        try (Connection connection = ConnectionProvider.connect()) {
+            Future<LogInResponse> response = connection.sendLogIn("Nick");
+            assertThat(response.get(), is(LogInResponse.OK));
+
+            List<String> messages = Arrays.asList(
+                    "",
+                    ",",
+                    "10,-2",
+                    "-1,2",
+                    "1000000,20",
+                    "1,10",
+                    "10",
+                    "10,10g"
+            );
+
+            for (String message : messages) {
+                Future<String> game = connection.sendMessageAndHook("GNW", message);
+                assertThat(game.get().matches("-[12]"), is(true));
+            }
         }
     }
 

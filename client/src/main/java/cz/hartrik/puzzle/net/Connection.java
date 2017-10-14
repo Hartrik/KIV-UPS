@@ -75,6 +75,15 @@ public class Connection implements AutoCloseable {
         send(String.format("|%s%s|", type, content));
     }
 
+    Future<String> sendMessageAndHook(String type, String content) throws Exception {
+        CompletableFuture<String> future = new CompletableFuture<>();
+        reader.addConsumer(type, MessageConsumer.temporary(future::complete));
+
+        send(String.format("|%s%s|", type, content));
+
+        return future;
+    }
+
     void sendRaw(String data) throws Exception {
         send(String.format("|%s|", data));
     }
@@ -111,13 +120,13 @@ public class Connection implements AutoCloseable {
         return future;
     }
 
-    public Future<String> sendNewGame() throws Exception {
+    public Future<String> sendNewGame(int w, int h) throws Exception {
         connect();
 
         CompletableFuture<String> future = new CompletableFuture<>();
-        reader.addConsumer("GAM", MessageConsumer.temporary(future::complete));
+        reader.addConsumer("GNW", MessageConsumer.temporary(future::complete));
 
-        sendMessage("NEW", "");
+        sendMessage("GNW", w + "," + h);
 
         return future;
     }

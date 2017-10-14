@@ -2,7 +2,7 @@
 /**
  *
  * @author: Patrik Harag
- * @version: 2017-10-12
+ * @version: 2017-10-14
  */
 
 #ifndef SERVER_PROTOCOL_H
@@ -19,5 +19,8 @@
 
 #define PROTOCOL_LOF_OK 0
 #define PROTOCOL_LOF_IN_GAME 1
+
+#define PROTOCOL_GNW_WRONG_FORMAT (-1)
+#define PROTOCOL_GNW_WRONG_SIZE (-2)
 
 #endif

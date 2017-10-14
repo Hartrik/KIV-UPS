@@ -11,7 +11,6 @@
 #include <stdbool.h>
 #include "controller.h"
 #include "protocol.h"
-#include "game_pool.h"
 #include "utils.h"
 #include "server.h"
 #include "shared.h"
@@ -26,6 +25,33 @@ void controller_update(Session *session, unsigned long long time) {
             controller_send(session, "PIN", "");
         }
     }
+}
+
+static bool parse_size(char* string, long* w, long* h) {
+    if (string == NULL)
+        return false;
+
+    char* sep_str = strchr(string, ',');
+    if (sep_str == NULL)
+        return false;
+
+    int sep_index = (int) (sep_str - string);
+    if (sep_index >= strlen(string))
+        return false;  // xxx,
+    string[sep_index] = '\0';
+
+    char *rest;
+    *w = strtol(string, &rest, 10);
+
+    if (strlen(rest) != 0)
+        return false;
+
+    *h = strtol(string + sep_index + 1, &rest, 10);
+
+    if (strlen(rest) != 0)
+        return false;
+
+    return true;
 }
 
 bool controller_process_message(Session *session, char *type, char *content) {
@@ -66,11 +92,27 @@ bool controller_process_message(Session *session, char *type, char *content) {
             printf("  [%d] - User logged out", session->socket_fd);
         }
 
-    } else if (strncmp(type, "NEW", 3) == 0) {
-        Game* game = gp_create_game(&game_pool, content);
-        session->game = game;
+    } else if (strncmp(type, "GNW", 3) == 0) {
+        long w, h;
 
-        controller_send_int(session, "GAM", game == NULL ? -1 : game->id);
+        if (parse_size(content, &w, &h)) {
+            if (w >= GAME_MIN_SIZE && w <= GAME_MAX_SIZE
+                    && h >= GAME_MIN_SIZE && h <= GAME_MAX_SIZE) {
+
+                Game* game = shared_create_game(
+                        session, &game_pool, (unsigned int) w, (unsigned int) h);
+
+                session->game = game;
+                controller_send_int(session, "GNW", game->id);
+                printf("  [%d] - New game [id=%d, w=%ld, h=%ld]\n",
+                       session->socket_fd, game->id, w, h);
+
+            } else {
+                controller_send_int(session, "GNW", PROTOCOL_GNW_WRONG_SIZE);
+            }
+        } else {
+            controller_send_int(session, "GNW", PROTOCOL_GNW_WRONG_FORMAT);
+        }
 
     } else {
         printf("  [%d] - Unknown command: %s\n", session->socket_fd, type);
