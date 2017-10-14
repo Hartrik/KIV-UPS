@@ -14,6 +14,7 @@
 #include "game_pool.h"
 #include "utils.h"
 #include "server.h"
+#include "shared.h"
 
 void controller_update(Session *session, unsigned long long time) {
     unsigned long long last_activity_diff = time - session->last_activity;
@@ -66,7 +67,7 @@ bool controller_process_message(Session *session, char *type, char *content) {
         }
 
     } else if (strncmp(type, "NEW", 3) == 0) {
-        Game* game = gp_create_game(content);
+        Game* game = gp_create_game(&game_pool, content);
         session->game = game;
 
         controller_send_int(session, "GAM", game == NULL ? -1 : game->id);

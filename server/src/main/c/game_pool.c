@@ -2,59 +2,56 @@
 /**
  *
  * @author: Patrik Harag
- * @version: 2017-10-07
+ * @version: 2017-10-14
  */
 
 #include <stdlib.h>
 #include "game_pool.h"
 
-static Game **games = NULL;
-static size_t games_size = 0;
-static size_t games_capacity = 0;
-static int last_id = -1;
-
-static void ensure_capacity() {
-    if (games_capacity >= games_size + 1)
+static void ensure_capacity(GamePool* game_pool) {
+    if (game_pool->games_capacity >= game_pool->games_size + 1)
         return;  // not needed
 
-    if (games == NULL) {
-        games_capacity = GAME_POOL_DEFAULT_CAPACITY;
-        games = (Game **) calloc(games_capacity, sizeof(Game*));
+    if (game_pool->games == NULL) {
+        game_pool->games_capacity = GAME_POOL_DEFAULT_CAPACITY;
+        game_pool->games = (Game **) calloc(game_pool->games_capacity, sizeof(Game*));
     } else  {
-        games_capacity *= GAME_POOL_INCREASE_RATIO;
-        games = (Game **) realloc(games, games_capacity * sizeof(Game*));
+        game_pool->games_capacity *= GAME_POOL_INCREASE_RATIO;
+        game_pool->games = (Game **) realloc(
+                game_pool->games, game_pool->games_capacity * sizeof(Game*));
     }
 }
 
-void gp_init() {
-    gp_free();
+void gp_init(GamePool* game_pool) {
+    gp_free(game_pool);
 }
 
-Game *gp_create_game(char* settings) {
+Game *gp_create_game(GamePool* game_pool, char* settings) {
     Game* game = (Game *) calloc(1, sizeof(Game));
-    game->id = ++last_id;
+    game->id = ++game_pool->last_id;
 
-    games_size++;
-    ensure_capacity();
-    games[games_size - 1] = game;
+    game_pool->games_size++;
+    ensure_capacity(game_pool);
+    game_pool->games[game_pool->games_size - 1] = game;
     return game;
 }
 
-void gp_free() {
-    if (games_size > 0) {
+void gp_free(GamePool* game_pool) {
+    if (game_pool->games_size > 0) {
         int i;
 
-        for (i = 0; i < games_size; i++) {
-            Game *entry = games[i];
+        for (i = 0; i < game_pool->games_size; i++) {
+            Game *entry = game_pool->games[i];
 
             free(entry);
         }
 
-        free(games);
+        free(game_pool->games);
     }
 
-    games = NULL;
-    games_size = 0;
-    games_capacity = 0;
+    game_pool->games = NULL;
+    game_pool->games_size = 0;
+    game_pool->games_capacity = 0;
+    game_pool->last_id = -1;
 }
 
