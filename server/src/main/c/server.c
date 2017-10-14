@@ -105,6 +105,9 @@ void* connection_handler(void* socket_desc) {
     printf("  [%d] Listening...\n", socket_fd);
 
     while (!exit) {
+        unsigned long long cycle_start = utils_current_millis();
+        bool sleep = true;
+
         // write
         if (session.to_send.index > 0) {
             // TODO: exceptions handling
@@ -114,6 +117,7 @@ void* connection_handler(void* socket_desc) {
             fflush(stdout);
 
             buffer_reset(&(session.to_send));
+            sleep = false;
         }
 
         // read
@@ -145,18 +149,31 @@ void* connection_handler(void* socket_desc) {
                     buffer_add(&message_buffer, socket_buffer[i]);
                 }
             }
+            sleep = false;
+
         } else if (recv_size == -1) {
+            // end of stream
             if ((errno != EAGAIN) && (errno != EWOULDBLOCK)) {
                 printf("  [%d] Error", socket_fd);
                 perror("");
             }
             exit = true;
+            sleep = false;
+
         } else {
             // no data...
-            utils_sleep(100);  // TODO: dynamic sleep
         }
 
-        unsigned long long diff = utils_current_millis() - last_client_activity;
+        // sleep
+        unsigned long long cycle_end = utils_current_millis();
+        unsigned long long cycle = cycle_end - cycle_start;
+        if (sleep && cycle < SERVER_CYCLE) {
+            utils_sleep(SERVER_CYCLE - cycle);
+            printf("s");
+        }
+
+        // timeout
+        unsigned long long diff = cycle_end - last_client_activity;
         if (diff > SERVER_TIMEOUT) {
             printf("  [%d] Timeout (after %llu ms)\n", socket_fd, diff);
             exit = true;
