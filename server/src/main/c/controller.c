@@ -2,7 +2,7 @@
 /**
  *
  * @author: Patrik Harag
- * @version: 2017-10-10
+ * @version: 2017-10-14
  */
 
 #include <stdio.h>
@@ -13,8 +13,21 @@
 #include "protocol.h"
 #include "game_pool.h"
 #include "utils.h"
+#include "server.h"
 
-bool process_message(Session* session, char* type, char* content) {
+void controller_update(Session *session, unsigned long long time) {
+    unsigned long long last_activity_diff = time - session->last_activity;
+
+    if (last_activity_diff > (SERVER_TIMEOUT / 2)) {
+        unsigned long long last_ping_diff = time - session->last_ping;
+        if (last_ping_diff > (SERVER_TIMEOUT / 2)) {
+            session->last_ping = time;
+            controller_send(session, "PIN", "");
+        }
+    }
+}
+
+bool controller_process_message(Session *session, char *type, char *content) {
     printf("  [%d] Message: type='%s' content='%s'\n",
            session->socket_fd, type, content);
     fflush(stdout);
@@ -22,7 +35,7 @@ bool process_message(Session* session, char* type, char* content) {
     if (strncmp(type, "BYE", 3) == 0) {
         return true;
 
-    } else if (strncmp(type, "NOP", 3) == 0) {
+    } else if (strncmp(type, "PIN", 3) == 0) {
         // nothing
 
     } else if (strncmp(type, "LIN", 3) == 0) {

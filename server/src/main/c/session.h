@@ -19,10 +19,12 @@
 typedef struct _Session {
 
     int socket_fd;
+    unsigned long long last_activity;
+    unsigned long long last_ping;
+    Buffer to_send;
+
     char name[SESSION_PLAYER_MAX_NAME_LENGTH + 1];
     Game* game;
-
-    Buffer to_send;
 
 } Session;
 

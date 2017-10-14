@@ -12,7 +12,7 @@ import java.util.concurrent.Future;
 
 /**
  * @author Patrik Harag
- * @version 2017-10-10
+ * @version 2017-10-14
  */
 public class Connection implements AutoCloseable {
 
@@ -33,6 +33,8 @@ public class Connection implements AutoCloseable {
     Connection(String host, int port) {
         this.host = host;
         this.port = port;
+        this.reader = new ReaderThread(this::onException);
+        this.writer = new WriterThread(this::onException);
     }
 
     synchronized void connect() throws IOException {
@@ -42,11 +44,15 @@ public class Connection implements AutoCloseable {
         this.exception = null;
         this.socket = new Socket(host, port);
 
-        this.reader = new ReaderThread(socket.getInputStream(), CHARSET, this::onException);
-        this.writer = new WriterThread(socket.getOutputStream(), CHARSET, this::onException);
+        this.reader.initStream(socket.getInputStream(), CHARSET);
+        this.writer.initStream(socket.getOutputStream(), CHARSET);
 
         reader.start();
         writer.start();
+    }
+
+    public void addConsumer(String type, MessageConsumer consumer) {
+        this.reader.addConsumer(type, consumer);
     }
 
     private void onException(Exception e) {
@@ -73,10 +79,10 @@ public class Connection implements AutoCloseable {
         send(String.format("|%s|", data));
     }
 
-    public void sendNop() throws Exception {
+    public void sendPing() throws Exception {
         connect();
 
-        sendMessage("NOP", "");
+        sendMessage("PIN", "");
     }
 
     public Future<LogInResponse> sendLogIn(String nick) throws Exception {

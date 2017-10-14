@@ -13,25 +13,32 @@ import java.util.function.Consumer;
 /**
  *
  * @author Patrik Harag
- * @version 2017-10-07
+ * @version 2017-10-14
  */
 public class ReaderThread extends Thread {
 
-
-    private final Reader reader;
     private final Map<String, Queue<MessageConsumer>> consumers;
     private final Consumer<Exception> onException;
+    private volatile Reader reader;
     private volatile boolean close = false;
 
-    public ReaderThread(InputStream inputStream, Charset charset,
-                        Consumer<Exception> onException) {
+    public ReaderThread(Consumer<Exception> onException) {
         this.onException = onException;
         this.consumers = new ConcurrentHashMap<>();
+    }
+
+    public synchronized void initStream(InputStream inputStream, Charset charset) {
+        if (reader != null)
+            throw new IllegalStateException("Stream already initialized");
+
         this.reader = new InputStreamReader(inputStream, charset);
     }
 
     @Override
     public void run() {
+        if (reader == null)
+            throw new IllegalStateException("Stream not initialized!");
+
         try {
             StringBuilder builder = new StringBuilder();
             while (true) {

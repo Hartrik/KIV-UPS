@@ -1,5 +1,6 @@
 package cz.hartrik.puzzle.net;
 
+import cz.hartrik.common.Exceptions;
 import cz.hartrik.puzzle.net.protocol.LogInResponse;
 import cz.hartrik.puzzle.net.protocol.LogOutResponse;
 import java.util.concurrent.Future;
@@ -10,9 +11,11 @@ import static org.hamcrest.CoreMatchers.*;
 
 /**
  * @author Patrik Harag
- * @version 2017-10-10
+ * @version 2017-10-14
  */
 public class ConnectionTest {
+
+    private static final int DEFAULT_TIMEOUT = 500;
 
     // GENERAL
 
@@ -23,7 +26,7 @@ public class ConnectionTest {
         Thread.sleep(5_000);
         // server must recognize /dead/ client
 
-        connection.sendNop();
+        connection.sendPing();
         connection.close();
     }
 
@@ -33,9 +36,21 @@ public class ConnectionTest {
         // server must recognize /dead/ client
     }
 
+    @Test
+    public void testLongConnection() throws Exception {
+        try (Connection connection = ConnectionProvider.connect()) {
+
+            connection.addConsumer("PIN", MessageConsumer.persistant(s -> {
+                Exceptions.silent(connection::sendPing);
+            }));
+
+            Thread.sleep(5_000);
+        }
+    }
+
     // LOG IN
 
-    @Test
+    @Test(timeout = DEFAULT_TIMEOUT)
     public void testLogIn() throws Exception {
         Connection connection = ConnectionProvider.connect();
 
@@ -45,7 +60,7 @@ public class ConnectionTest {
         connection.close();
     }
 
-    @Test
+    @Test(timeout = DEFAULT_TIMEOUT)
     public void testLogInNameTooLong() throws Exception {
         Connection connection = ConnectionProvider.connect();
 
@@ -56,7 +71,7 @@ public class ConnectionTest {
         connection.close();
     }
 
-    @Test
+    @Test(timeout = DEFAULT_TIMEOUT)
     public void testLogInWrongChars() throws Exception {
         Connection connection = ConnectionProvider.connect();
 
@@ -66,7 +81,7 @@ public class ConnectionTest {
         connection.close();
     }
 
-    @Test
+    @Test(timeout = DEFAULT_TIMEOUT)
     public void testLogInTwice() throws Exception {
         Connection connection = ConnectionProvider.connect();
 
@@ -81,7 +96,7 @@ public class ConnectionTest {
 
     // LOG OUT
 
-    @Test
+    @Test(timeout = DEFAULT_TIMEOUT)
     public void testLogOut() throws Exception {
         try (Connection connection = ConnectionProvider.connect()) {
 
@@ -93,7 +108,7 @@ public class ConnectionTest {
         }
     }
 
-    @Test
+    @Test(timeout = DEFAULT_TIMEOUT)
     public void testLogOutWithoutLogIn() throws Exception {
         try (Connection connection = ConnectionProvider.connect()) {
             Future<LogOutResponse> outRes = connection.sendLogOut();
@@ -103,7 +118,7 @@ public class ConnectionTest {
 
     // NEW GAME
 
-    @Test
+    @Test(timeout = DEFAULT_TIMEOUT)
     public void testNewGame() throws Exception {
         try (Connection connection = ConnectionProvider.connect()) {
             Future<LogInResponse> response = connection.sendLogIn("Nick");

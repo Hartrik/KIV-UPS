@@ -14,21 +14,28 @@ import java.util.function.Consumer;
  */
 public class WriterThread extends Thread {
 
-    private final Writer writer;
     private final Consumer<Exception> onException;
     private final BlockingQueue<String> queue;
+    private volatile Writer writer;
     private volatile boolean close = false;
 
-    public WriterThread(OutputStream outputStream, Charset charset,
-                        Consumer<Exception> onException) {
-
-        this.writer = new OutputStreamWriter(outputStream, charset);
+    public WriterThread(Consumer<Exception> onException) {
         this.onException = onException;
         this.queue = new LinkedBlockingQueue<>();
     }
 
+    public synchronized void initStream(OutputStream outputStream, Charset charset) {
+        if (writer != null)
+            throw new IllegalStateException("Stream already initialized");
+
+        this.writer = new OutputStreamWriter(outputStream, charset);
+    }
+
     @Override
     public void run() {
+        if (writer == null)
+            throw new IllegalStateException("Stream not initialized!");
+
         try {
             while (!close || !queue.isEmpty()) {
                 String data = queue.poll(500, TimeUnit.MILLISECONDS);

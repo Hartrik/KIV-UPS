@@ -1,10 +1,11 @@
 package cz.hartrik.puzzle.net;
 
+import cz.hartrik.common.Exceptions;
 import java.util.function.Consumer;
 
 /**
  * @author Patrik Harag
- * @version 2017-10-10
+ * @version 2017-10-14
  */
 public class ConnectionHolder implements AutoCloseable {
 
@@ -18,6 +19,10 @@ public class ConnectionHolder implements AutoCloseable {
 
     public ConnectionHolder(Connection connection) {
         this.connection = connection;
+
+        connection.addConsumer("PIN", MessageConsumer.persistant(s -> {
+            Exceptions.silent(connection::sendPing);
+        }));
     }
 
     public void async(Command command, Consumer<Exception> onError) {

@@ -88,18 +88,18 @@ void* connection_handler(void* socket_desc) {
     // Set up session
     Session session;
     session_init(&session, socket_fd);
+    session.last_activity = utils_current_millis();
 
     // Set up timeout
     struct timeval timeout;
-    timeout.tv_sec = SERVER_TIMEOUT / 1000;
-    timeout.tv_usec = 0;
+    timeout.tv_sec = 0;
+    timeout.tv_usec = SERVER_CYCLE * 1000;
     setsockopt(socket_fd, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof(timeout));
 
     // Set up message buffer
     Buffer message_buffer;
     buffer_init(&message_buffer, SERVER_MSG_BUFFER_SIZE);
 
-    unsigned long long last_client_activity = utils_current_millis();
     bool exit = false;
 
     printf("  [%d] Listening...\n", socket_fd);
@@ -107,6 +107,8 @@ void* connection_handler(void* socket_desc) {
     while (!exit) {
         unsigned long long cycle_start = utils_current_millis();
         bool sleep = true;
+
+        controller_update(&session, cycle_start);
 
         // write
         if (session.to_send.index > 0) {
@@ -123,7 +125,7 @@ void* connection_handler(void* socket_desc) {
         // read
         ssize_t recv_size = recv(socket_fd, socket_buffer, SERVER_SOCKET_BUFFER_SIZE, 0);
         if (recv_size > 0) {
-            last_client_activity = utils_current_millis();
+            session.last_activity = utils_current_millis();
 
             for (int i = 0; i < recv_size; ++i) {
                 char c = socket_buffer[i];
@@ -135,7 +137,7 @@ void* connection_handler(void* socket_desc) {
                         char *type = message_buffer_get_type(&message_buffer);
                         char *content = message_buffer_get_content(&message_buffer);
 
-                        exit |= process_message(&session, type, content);
+                        exit |= controller_process_message(&session, type, content);
 
                         // reset buffer
                         buffer_reset(&message_buffer);
@@ -152,13 +154,11 @@ void* connection_handler(void* socket_desc) {
             sleep = false;
 
         } else if (recv_size == -1) {
-            // end of stream
+            // end of stream or timeout
             if ((errno != EAGAIN) && (errno != EWOULDBLOCK)) {
                 printf("  [%d] Error", socket_fd);
                 perror("");
             }
-            exit = true;
-            sleep = false;
 
         } else {
             // no data...
@@ -169,11 +169,10 @@ void* connection_handler(void* socket_desc) {
         unsigned long long cycle = cycle_end - cycle_start;
         if (sleep && cycle < SERVER_CYCLE) {
             utils_sleep(SERVER_CYCLE - cycle);
-            printf("s");
         }
 
         // timeout
-        unsigned long long diff = cycle_end - last_client_activity;
+        unsigned long long diff = cycle_end - session.last_activity;
         if (diff > SERVER_TIMEOUT) {
             printf("  [%d] Timeout (after %llu ms)\n", socket_fd, diff);
             exit = true;
