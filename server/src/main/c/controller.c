@@ -95,7 +95,9 @@ bool controller_process_message(Session *session, char *type, char *content) {
     } else if (strncmp(type, "GNW", 3) == 0) {
         long w, h;
 
-        if (parse_size(content, &w, &h)) {
+        if (!shared_can_create_game(session)) {
+            controller_send_int(session, "GNW", PROTOCOL_GNW_NO_PERMISSIONS);
+        } else if (parse_size(content, &w, &h)) {
             if (w >= GAME_MIN_SIZE && w <= GAME_MAX_SIZE
                     && h >= GAME_MIN_SIZE && h <= GAME_MAX_SIZE) {
 

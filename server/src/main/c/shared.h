@@ -14,6 +14,7 @@
 static GamePool game_pool;
 static pthread_mutex_t shared_lock;
 
+bool shared_can_create_game(Session* session);
 Game *shared_create_game(Session* session, GamePool* game_pool, unsigned int w, unsigned int h);
 
 #endif

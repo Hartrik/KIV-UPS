@@ -22,5 +22,6 @@
 
 #define PROTOCOL_GNW_WRONG_FORMAT (-1)
 #define PROTOCOL_GNW_WRONG_SIZE (-2)
+#define PROTOCOL_GNW_NO_PERMISSIONS (-3)
 
 #endif
