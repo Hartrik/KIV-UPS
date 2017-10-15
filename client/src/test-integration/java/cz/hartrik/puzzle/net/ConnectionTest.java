@@ -1,8 +1,10 @@
 package cz.hartrik.puzzle.net;
 
 import cz.hartrik.common.Exceptions;
+import cz.hartrik.puzzle.net.protocol.JoinGameResponse;
 import cz.hartrik.puzzle.net.protocol.LogInResponse;
 import cz.hartrik.puzzle.net.protocol.LogOutResponse;
+import cz.hartrik.puzzle.net.protocol.NewGameResponse;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.Future;
@@ -13,7 +15,7 @@ import static org.hamcrest.CoreMatchers.*;
 
 /**
  * @author Patrik Harag
- * @version 2017-10-14
+ * @version 2017-10-15
  */
 public class ConnectionTest {
 
@@ -126,8 +128,17 @@ public class ConnectionTest {
             Future<LogInResponse> response = connection.sendLogIn("Nick");
             assertThat(response.get(), is(LogInResponse.OK));
 
-            Future<String> game = connection.sendNewGame(10, 5);
-            assertThat(game.get().matches("[0-9]+"), is(true));
+            Future<NewGameResponse> game = connection.sendNewGame(10, 5);
+            assertThat(game.get().getStatus(), is(NewGameResponse.Status.OK));
+            assertThat(game.get().getGameID() >= 0, is(true));
+        }
+    }
+
+    @Test(timeout = DEFAULT_TIMEOUT)
+    public void testNewGameNotLogged() throws Exception {
+        try (Connection connection = ConnectionProvider.connect()) {
+            Future<NewGameResponse> game = connection.sendNewGame(10, 5);
+            assertThat(game.get().getStatus(), is(NewGameResponse.Status.NO_PERMISSIONS));
         }
     }
 
@@ -152,6 +163,23 @@ public class ConnectionTest {
                 Future<String> game = connection.sendMessageAndHook("GNW", message);
                 assertThat(game.get().matches("-[12]"), is(true));
             }
+        }
+    }
+
+    // JOIN
+
+    @Test(timeout = DEFAULT_TIMEOUT)
+    public void testNewGameAndJoin() throws Exception {
+        try (Connection connection = ConnectionProvider.connect()) {
+            Future<LogInResponse> response = connection.sendLogIn("Nick");
+            assertThat(response.get(), is(LogInResponse.OK));
+
+            Future<NewGameResponse> game = connection.sendNewGame(10, 5);
+            assertThat(game.get().getStatus(), is(NewGameResponse.Status.OK));
+            assertThat(game.get().getGameID() >= 0, is(true));
+
+            Future<JoinGameResponse> join = connection.sendJoinGame(game.get().getGameID());
+            assertThat(join.get(), is(JoinGameResponse.OK));
         }
     }
 

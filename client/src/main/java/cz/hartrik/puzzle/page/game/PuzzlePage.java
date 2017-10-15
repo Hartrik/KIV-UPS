@@ -1,9 +1,10 @@
 package cz.hartrik.puzzle.page.game;
 
+import cz.hartrik.puzzle.net.ConnectionHolder;
+import cz.hartrik.puzzle.net.protocol.GameStateResponse;
 import cz.hartrik.puzzle.page.Page;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Random;
 import javafx.scene.Node;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.image.Image;
@@ -12,25 +13,27 @@ import javafx.scene.layout.Pane;
 /**
  *
  * @author Patrik Harag
- * @version 2017-10-03
+ * @version 2017-10-14
  */
 public class PuzzlePage implements Page {
+
+    private final ConnectionHolder connection;
 
     private List<Piece> pieces;
     private Pane desk;
 
-    public PuzzlePage() {
-        createContent();
+    public PuzzlePage(ConnectionHolder connection, GameStateResponse initial) {
+        this.connection = connection;
+        createContent(initial);
     }
 
-    private void createContent() {
+    private void createContent(GameStateResponse initialState) {
         Image image = new Image(getClass().getResourceAsStream("picture.jpg"));
 
         int numOfColumns = (int) (image.getWidth() / Piece.SIZE);
         int numOfRows = (int) (image.getHeight() / Piece.SIZE);
         this.desk = new Pane();
 
-        Random random = new Random();
         this.pieces = new ArrayList<>();
         for (int col = 0; col < numOfColumns; col++) {
             for (int row = 0; row < numOfRows; row++) {
@@ -38,8 +41,10 @@ public class PuzzlePage implements Page {
                 int y = row * Piece.SIZE;
                 final Piece piece = new Piece(image, x, y);
 
-                piece.moveX( random.nextInt(600) - 300);
-                piece.moveY( random.nextInt(400) - 200);
+                // TODO: check
+                GameStateResponse.Piece p = initialState.getPieces().get(col + row * numOfColumns);
+                piece.moveX(p.getX());
+                piece.moveY(p.getY());
 
                 pieces.add(piece);
                 desk.getChildren().add(piece.getNode());
@@ -61,7 +66,4 @@ public class PuzzlePage implements Page {
         return scrollPane;
     }
 
-    @Override
-    public void onShow() {
-    }
 }

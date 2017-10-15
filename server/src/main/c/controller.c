@@ -2,20 +2,21 @@
 /**
  *
  * @author: Patrik Harag
- * @version: 2017-10-14
+ * @version: 2017-10-15
  */
 
 #include <stdio.h>
 #include <assert.h>
 #include <string.h>
 #include <stdbool.h>
+#include <pthread.h>
 #include "controller.h"
 #include "protocol.h"
 #include "utils.h"
 #include "server.h"
 #include "shared.h"
 
-void controller_update(Session *session, unsigned long long time) {
+static void check_timeout(Session *session, unsigned long long time) {
     unsigned long long last_activity_diff = time - session->last_activity;
 
     if (last_activity_diff > (SERVER_TIMEOUT / 2)) {
@@ -25,6 +26,10 @@ void controller_update(Session *session, unsigned long long time) {
             controller_send(session, "PIN", "");
         }
     }
+}
+
+void controller_update(Session *session, unsigned long long time) {
+    check_timeout(session, time);
 }
 
 static bool parse_size(char* string, long* w, long* h) {
@@ -54,6 +59,19 @@ static bool parse_size(char* string, long* w, long* h) {
     return true;
 }
 
+static bool parse_number(char* string, long* i) {
+    if (string == NULL)
+        return false;
+
+    char *rest;
+    *i = strtol(string, &rest, 10);
+
+    if (strlen(rest) != 0)
+        return false;
+
+    return true;
+}
+
 bool controller_process_message(Session *session, char *type, char *content) {
     printf("  [%d] Message: type='%s' content='%s'\n",
            session->socket_fd, type, content);
@@ -69,13 +87,13 @@ bool controller_process_message(Session *session, char *type, char *content) {
         char* name = content;
 
         if (session_is_logged(session)) {
-            controller_send_int(session, "LIN", PROTOCOL_LIN_ERR_ALREADY_LOGGED);
+            controller_send_int(session, "LIN", PROTOCOL_LIN_ALREADY_LOGGED);
         } else if (name == NULL || strlen(name) < SESSION_PLAYER_MIN_NAME_LENGTH) {
-            controller_send_int(session, "LIN", PROTOCOL_LIN_ERR_NAME_TOO_SHORT);
+            controller_send_int(session, "LIN", PROTOCOL_LIN_NAME_TOO_SHORT);
         } else if (strlen(name) > SESSION_PLAYER_MAX_NAME_LENGTH) {
-            controller_send_int(session, "LIN", PROTOCOL_LIN_ERR_NAME_TOO_LONG);
+            controller_send_int(session, "LIN", PROTOCOL_LIN_NAME_TOO_LONG);
         } else if (!utils_is_valid_name(name)) {
-            controller_send_int(session, "LIN", PROTOCOL_LIN_ERR_UNSUPPORTED_CHARS);
+            controller_send_int(session, "LIN", PROTOCOL_LIN_UNSUPPORTED_CHARS);
         } else {
             // TODO: uživatelé se stejnými jmény
             strcpy(session->name, name);
@@ -102,9 +120,8 @@ bool controller_process_message(Session *session, char *type, char *content) {
                     && h >= GAME_MIN_SIZE && h <= GAME_MAX_SIZE) {
 
                 Game* game = shared_create_game(
-                        session, &game_pool, (unsigned int) w, (unsigned int) h);
+                        session, (unsigned int) w, (unsigned int) h);
 
-                session->game = game;
                 controller_send_int(session, "GNW", game->id);
                 printf("  [%d] - New game [id=%d, w=%ld, h=%ld]\n",
                        session->socket_fd, game->id, w, h);
@@ -114,6 +131,58 @@ bool controller_process_message(Session *session, char *type, char *content) {
             }
         } else {
             controller_send_int(session, "GNW", PROTOCOL_GNW_WRONG_FORMAT);
+        }
+
+    } else if (strncmp(type, "GJO", 3) == 0) {
+        if (!shared_can_join_game(session)) {
+            controller_send_int(session, "GJO", PROTOCOL_GJO_NO_PERMISSIONS);
+        } else {
+            long id;
+            if (parse_number(content, &id)) {
+                Game* game = shared_join_game(session, (int) id);
+                if (game != NULL) {
+                    controller_send_int(session, "GJO", PROTOCOL_GJO_OK);
+                } else {
+                    controller_send_int(session, "GJO", PROTOCOL_GJO_CANNOT_JOIN);
+                }
+
+            } else {
+                controller_send_int(session, "GJO", PROTOCOL_GJO_CANNOT_JOIN);
+            }
+        }
+
+    } else if (strncmp(type, "GST", 3) == 0) {
+        // TODO
+
+        long id;
+
+        if (session_is_logged(session) && parse_number(content, &id)) {
+            pthread_mutex_lock(&shared_lock);
+
+            Game* game = gp_find_game(&game_pool, (int) id);
+            if (game != NULL) {
+                int pieces = game->h * game->w;
+                char str[2 * pieces /* separators */
+                         + pieces * (1 /* sign */ + 6 /* digits*/)];
+
+                int last = 0;
+                for (int i = 0; i < pieces; ++i) {
+                    Piece* p = game->pieces[i];
+                    last += sprintf(str + last, "%d,%d;", p->x, p->y);
+                }
+
+                pthread_mutex_unlock(&shared_lock);
+
+                controller_send(session, "GST", str);
+
+            } else {
+                pthread_mutex_unlock(&shared_lock);
+
+                controller_send(session, "GST", "error");
+            }
+
+        } else {
+            controller_send(session, "GST", "error");
         }
 
     } else {

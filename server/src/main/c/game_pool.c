@@ -39,6 +39,15 @@ Game *gp_create_game(GamePool *game_pool, unsigned int w, unsigned int h) {
     return game;
 }
 
+Game *gp_find_game(GamePool *game_pool, int id) {
+    for (int i = 0; i < game_pool->games_size; ++i) {
+        Game* game = game_pool->games[i];
+        if (game->id == id)
+            return game;
+    }
+    return NULL;
+}
+
 void gp_free(GamePool* game_pool) {
     if (game_pool->games_size > 0) {
         int i;

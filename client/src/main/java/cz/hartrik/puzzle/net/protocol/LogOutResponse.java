@@ -13,6 +13,12 @@ public enum LogOutResponse {
 
     UNKNOWN;
 
+    /**
+     * Parses server response.
+     *
+     * @param string text
+     * @return parsed response
+     */
     public static LogOutResponse parse(String string) {
         try {
             int i = Integer.parseInt(string);

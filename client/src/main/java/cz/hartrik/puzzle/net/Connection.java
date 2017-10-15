@@ -1,8 +1,7 @@
 package cz.hartrik.puzzle.net;
 
 import cz.hartrik.common.Exceptions;
-import cz.hartrik.puzzle.net.protocol.LogInResponse;
-import cz.hartrik.puzzle.net.protocol.LogOutResponse;
+import cz.hartrik.puzzle.net.protocol.*;
 import java.io.*;
 import java.net.Socket;
 import java.nio.charset.Charset;
@@ -120,13 +119,41 @@ public class Connection implements AutoCloseable {
         return future;
     }
 
-    public Future<String> sendNewGame(int w, int h) throws Exception {
+    public Future<NewGameResponse> sendNewGame(int w, int h) throws Exception {
         connect();
 
-        CompletableFuture<String> future = new CompletableFuture<>();
-        reader.addConsumer("GNW", MessageConsumer.temporary(future::complete));
+        CompletableFuture<NewGameResponse> future = new CompletableFuture<>();
+        reader.addConsumer("GNW", MessageConsumer.temporary(response -> {
+            future.complete(NewGameResponse.parse(response));
+        }));
 
         sendMessage("GNW", w + "," + h);
+
+        return future;
+    }
+
+    public Future<JoinGameResponse> sendJoinGame(int gameID) throws Exception {
+        connect();
+
+        CompletableFuture<JoinGameResponse> future = new CompletableFuture<>();
+        reader.addConsumer("GJO", MessageConsumer.temporary(response -> {
+            future.complete(JoinGameResponse.parse(response));
+        }));
+
+        sendMessage("GJO", "" + gameID);
+
+        return future;
+    }
+
+    public Future<GameStateResponse> sendGameStateUpdate(int gameID) throws Exception {
+        connect();
+
+        CompletableFuture<GameStateResponse> future = new CompletableFuture<>();
+        reader.addConsumer("GST", MessageConsumer.temporary(response -> {
+            future.complete(GameStateResponse.parse(response));
+        }));
+
+        sendMessage("GST", "" + gameID);
 
         return future;
     }

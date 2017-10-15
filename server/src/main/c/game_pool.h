@@ -2,7 +2,7 @@
 /**
  *
  * @author: Patrik Harag
- * @version: 2017-10-14
+ * @version: 2017-10-15
  */
 
 #ifndef SERVER_GAME_POOL_H
@@ -25,6 +25,7 @@ typedef struct _GamePool {
 
 void gp_init(GamePool* game_pool);
 Game *gp_create_game(GamePool *game_pool, unsigned int w, unsigned int h);
+Game *gp_find_game(GamePool *game_pool, int id);
 void gp_free(GamePool* game_pool);
 
 #endif

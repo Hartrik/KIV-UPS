@@ -2,7 +2,7 @@
 /**
  *
  * @author: Patrik Harag
- * @version: 2017-10-14
+ * @version: 2017-10-15
  */
 
 #ifndef SERVER_CONTROLLER_H
