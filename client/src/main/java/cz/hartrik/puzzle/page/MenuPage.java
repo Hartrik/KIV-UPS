@@ -40,9 +40,8 @@ public class MenuPage extends PageBase {
         bNew.setPrefWidth(100);
 
         Button bJoin = new Button("Join game");
-        bJoin.setOnAction(event -> {});
+        bJoin.setOnAction(event -> onJoinGame());
         bJoin.setPrefWidth(100);
-        bJoin.setDisable(true);
 
         Button bLogOut = new Button("Log out");
         bLogOut.setOnAction(event -> onLogOut());
@@ -56,6 +55,11 @@ public class MenuPage extends PageBase {
 
     private void onNewGame() {
         Page page = new NewGamePage(application, connection, this);
+        application.setActivePage(page);
+    }
+
+    private void onJoinGame() {
+        Page page = new JoinGamePage(application, connection, this);
         application.setActivePage(page);
     }
 

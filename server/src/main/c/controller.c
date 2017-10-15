@@ -110,6 +110,30 @@ bool controller_process_message(Session *session, char *type, char *content) {
             printf("  [%d] - User logged out", session->socket_fd);
         }
 
+    } else if (strncmp(type, "GLI", 3) == 0) {
+        if (session_is_logged(session)) {
+            pthread_mutex_lock(&shared_lock);
+
+            size_t count = game_pool.games_size;
+            char str[3 * count * 1  // separators
+                    + 3 * count * 11  // digits
+                    + 1];  // \0
+            str[0] = '\0';
+
+            int last = 0;
+            for (int i = 0; i < count; ++i) {
+                Game* game = game_pool.games[i];
+                last += sprintf(str + last, "%d,%d,%d;", game->id, game->w, game->h);
+            }
+
+            pthread_mutex_unlock(&shared_lock);
+
+            controller_send(session, "GLI", str);
+
+        } else {
+            controller_send(session, "GLI", "");
+        }
+
     } else if (strncmp(type, "GNW", 3) == 0) {
         long w, h;
 
@@ -162,8 +186,9 @@ bool controller_process_message(Session *session, char *type, char *content) {
             Game* game = gp_find_game(&game_pool, (int) id);
             if (game != NULL) {
                 int pieces = game->h * game->w;
-                char str[2 * pieces /* separators */
-                         + pieces * (1 /* sign */ + 6 /* digits*/)];
+                char str[2 * pieces * 1  // separators
+                         + 2 * pieces * 11  // digits
+                         + 1];  // \0
 
                 int last = 0;
                 for (int i = 0; i < pieces; ++i) {

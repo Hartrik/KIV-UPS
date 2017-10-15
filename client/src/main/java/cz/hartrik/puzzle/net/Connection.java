@@ -158,6 +158,19 @@ public class Connection implements AutoCloseable {
         return future;
     }
 
+    public Future<GameListResponse> sendGameList() throws Exception {
+        connect();
+
+        CompletableFuture<GameListResponse> future = new CompletableFuture<>();
+        reader.addConsumer("GLI", MessageConsumer.temporary(response -> {
+            future.complete(GameListResponse.parse(response));
+        }));
+
+        sendMessage("GLI", "");
+
+        return future;
+    }
+
     /**
      * Closes connection, blocks.
      */

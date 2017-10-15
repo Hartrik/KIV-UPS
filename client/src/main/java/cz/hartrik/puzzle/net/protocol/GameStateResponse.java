@@ -5,10 +5,10 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- * Parses game state.
+ * Server response to the GST request.
  *
  * @author Patrik Harag
- * @version 2017-10-14
+ * @version 2017-10-15
  */
 public class GameStateResponse {
 

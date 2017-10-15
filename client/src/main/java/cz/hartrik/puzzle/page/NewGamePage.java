@@ -19,7 +19,7 @@ import javafx.scene.image.ImageView;
 import javafx.scene.layout.FlowPane;
 
 /**
- * A page with a new selection.
+ * A page with a new game selection.
  *
  * @author Patrik Harag
  * @version 2017-10-15
