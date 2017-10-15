@@ -70,8 +70,6 @@ public class LogInPage implements Page {
         ConnectionHolder holder = new ConnectionHolder(connection);
 
         holder.async(c -> {
-            Thread.sleep(500);  // TODO
-
             Future<LogInResponse> future = c.sendLogIn(name);
             LogInResponse response = future.get(2000, TimeUnit.MILLISECONDS);
 
@@ -79,7 +77,7 @@ public class LogInPage implements Page {
                 Exceptions.silent(c::close);
                 throw new RuntimeException("Error when logging in: " + response);
             } else {
-                Page page = new MenuPage(application, this, holder);
+                Page page = new MenuPage(application, holder, this);
                 application.setActivePage(page);
             }
 

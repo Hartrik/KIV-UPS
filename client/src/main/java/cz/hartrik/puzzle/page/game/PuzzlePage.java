@@ -13,23 +13,23 @@ import javafx.scene.layout.Pane;
 /**
  *
  * @author Patrik Harag
- * @version 2017-10-14
+ * @version 2017-10-15
  */
 public class PuzzlePage implements Page {
 
     private final ConnectionHolder connection;
+    private final Image image;
 
     private List<Piece> pieces;
     private Pane desk;
 
-    public PuzzlePage(ConnectionHolder connection, GameStateResponse initial) {
+    public PuzzlePage(ConnectionHolder connection, Image image, GameStateResponse initial) {
         this.connection = connection;
+        this.image = image;
         createContent(initial);
     }
 
     private void createContent(GameStateResponse initialState) {
-        Image image = new Image(getClass().getResourceAsStream("picture.jpg"));
-
         int numOfColumns = (int) (image.getWidth() / Piece.SIZE);
         int numOfRows = (int) (image.getHeight() / Piece.SIZE);
         this.desk = new Pane();
