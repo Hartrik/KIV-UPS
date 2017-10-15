@@ -10,16 +10,20 @@ Client <-- Server: LIN (success / failure)
 Client -> Server: GLI
 Client <-- Server: GLI (list of games)
 
-== Creating/Joining game ==
+== Creating game ==
+Client -> Server: GNW (setting)
+Client <-- Server: GNW (game ID / error code)
 
-Client -> Server: GNW (setting) | GIN (game ID)
-Client <-- Server: GAM (game ID)
+== Joining game ==
+
+Client -> Server: GJO (game ID)
+Client <-- Server: GJO (success / failure)
 
 == Playing game ==
 
 ...retrieving game data...
 
-Client <-- Server: GMV (game ID, piece, x, y)
+Client <-- Server: GST (game ID)
 
 ...user actions\nand other players actions...
 

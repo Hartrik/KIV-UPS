@@ -9,14 +9,14 @@ connected --> not_connected:BYE*
 
 state "Logged" as logged
 logged --> not_connected:BYE*
-logged --> game:GNW,\nGIN
-logged --> logged:GLI
+logged --> game:GJO
+logged --> logged:GLI,\nGNW
 logged --> connected:LOF
 
 state "In game" as game
 game --> not_connected:BYE*
 game --> logged:GOF
-game --> game:GMV
+game --> game:GMV,\nGST
 
 state "Disconnected" as not_connected
 not_connected --> [*]
