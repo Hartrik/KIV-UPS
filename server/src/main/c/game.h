@@ -2,14 +2,14 @@
 /**
  *
  * @author: Patrik Harag
- * @version: 2017-10-14
+ * @version: 2017-10-15
  */
 
 #ifndef SERVER_GAME_H
 #define SERVER_GAME_H
 
-#define GAME_MAX_SIZE 1000
-#define GAME_MIN_SIZE 5
+#define GAME_MAX_SIZE 100
+#define GAME_MIN_SIZE 2
 #define GAME_PIECE_SIZE 100
 #define GAME_SHUFFLE_MULTIPIER 1.5
 
