@@ -2,7 +2,7 @@
 /**
  *
  * @author: Patrik Harag
- * @version: 2017-10-15
+ * @version: 2017-10-16
  */
 
 #include "game_pool.h"
@@ -14,9 +14,13 @@
 GamePool game_pool;
 static pthread_mutex_t shared_lock;
 
+void shared_init();
+
 bool shared_can_create_game(Session* session);
 bool shared_can_join_game(Session* session);
 Game* shared_join_game(Session* session, int game_id);
 Game* shared_create_game(Session* session, unsigned int w, unsigned int h);
+
+void shared_free();
 
 #endif

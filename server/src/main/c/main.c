@@ -6,11 +6,9 @@
  */
 
 #include <stdio.h>
-#include <pthread.h>
 #include <signal.h>
 #include <string.h>
 #include "server.h"
-#include "game_pool.h"
 #include "shared.h"
 #include "utils.h"
 #include "stats.h"
@@ -40,17 +38,11 @@ int main() {
 
     stats_init();
 
-    if (pthread_mutex_init(&shared_lock, NULL) != 0) {
-        printf("Mutex init failed\n");
-        return 1;
-    }
-
-    gp_init(&game_pool);
+    shared_init();
 
     int ret = server_start(PORT);
 
-    gp_free(&game_pool);
-    pthread_mutex_destroy(&shared_lock);
+    shared_free();
 
     stats_store();
     stats_free();
