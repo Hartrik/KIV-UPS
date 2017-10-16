@@ -2,16 +2,21 @@
 /**
  *
  * @author: Patrik Harag
- * @version: 2017-10-14
+ * @version: 2017-10-16
  */
 
 #ifndef SERVER_SERVER_H
 #define SERVER_SERVER_H
 
+#include <stdbool.h>
+
 #define SERVER_SOCKET_BUFFER_SIZE 4
 #define SERVER_MSG_BUFFER_SIZE 4
+#define SERVER_CONNECTION_QUEUE 10  /* how many pending connections queue will hold */
 #define SERVER_TIMEOUT 2000  /* ms */
 #define SERVER_CYCLE 100  /* ms */
+
+bool TERMINATED;
 
 int server_start(int port);
 

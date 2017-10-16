@@ -3,7 +3,7 @@
  * Socket server, handles multiple clients using threads.
  *
  * @author: Patrik Harag
- * @version: 2017-10-07
+ * @version: 2017-10-16
  */
 
 #include <stdbool.h>
@@ -14,6 +14,7 @@
 #include <pthread.h>
 #include <errno.h>
 #include <unistd.h>
+#include <fcntl.h>
 
 #include "server.h"
 #include "utils.h"
@@ -25,29 +26,40 @@
 static void* connection_handler(void *);
 
 int server_start(int port) {
-    int socket_desc, client_socket, c, *new_socket;
-    struct sockaddr_in server, client;
-
     // Create socket
-    socket_desc = socket(AF_INET, SOCK_STREAM, IPPROTO_IP /* TPC */);
-    if (socket_desc == -1) {
-        printf("Could not create socket\n");
+    int server_fd = socket(AF_INET, SOCK_STREAM, IPPROTO_IP /* TPC */);
+    if (server_fd == -1) {
+        printf("Could not create server socket\n");
     }
-    printf("Socket created\n");
+    printf("Server socket created\n");
 
+    struct sockaddr_in server;
     server.sin_family = AF_INET;
     server.sin_addr.s_addr = INADDR_ANY;
     server.sin_port = htons(port);
 
     // Bind
-    if (bind(socket_desc, (struct sockaddr *) &server, sizeof(server)) < 0) {
+    if (bind(server_fd, (struct sockaddr *) &server, sizeof(server)) < 0) {
         perror("Bind failed");
         return 1;
     }
     printf("Bind done\n");
 
+    // Set accept to be non-blocking
+    int flags = fcntl(server_fd, F_GETFL, 0);
+    if (flags < 0) {
+        perror("Could not get server socket flags");
+        return 1;
+    }
+
+    int err = fcntl(server_fd, F_SETFL, flags | O_NONBLOCK);
+    if (err < 0) {
+        perror("Could set server socket to be non blocking");
+        return 1;
+    }
+
     // Listen
-    if (listen(socket_desc, 3) < 0) {
+    if (listen(server_fd, SERVER_CONNECTION_QUEUE) < 0) {
         perror("Listen failed");
         return 1;
     }
@@ -55,25 +67,31 @@ int server_start(int port) {
     // Accept and incoming connection
     printf("Waiting for incoming connections...\n");
 
-    c = sizeof(struct sockaddr_in);
-    while ((client_socket = accept(socket_desc, (struct sockaddr *) &client, (socklen_t *) &c))) {
+    do {
+        struct sockaddr client;
+        socklen_t client_len = sizeof(client);
 
-        if (client_socket < 0) {
-            perror("Accept failed");
-            return 1;
+        int client_fd = accept(server_fd, &client, &client_len);
+
+        if (client_fd > 0) {
+            printf("Connection accepted\n");
+
+            pthread_t sniffer_thread;
+            int *new_socket;
+            new_socket = malloc(1);
+            *new_socket = client_fd;
+
+            if (pthread_create(&sniffer_thread, NULL, connection_handler, new_socket) < 0) {
+                perror("Could not create thread");
+                return 1;
+            }
+        } else {
+            utils_sleep(100);
         }
+    } while (!TERMINATED);
 
-        printf("Connection accepted\n");
-
-        pthread_t sniffer_thread;
-        new_socket = malloc(1);
-        *new_socket = client_socket;
-
-        if (pthread_create(&sniffer_thread, NULL, connection_handler, (void *) new_socket) < 0) {
-            perror("Could not create thread");
-            return 1;
-        }
-    }
+    close(server_fd);
+    printf("Server socket closed\n");
 
     return 0;
 }
@@ -105,7 +123,7 @@ void* connection_handler(void* socket_desc) {
 
     printf("  [%d] Listening...\n", socket_fd);
 
-    while (!exit) {
+    while (!exit && !TERMINATED) {
         unsigned long long cycle_start = utils_current_millis();
         bool sleep = true;
 
