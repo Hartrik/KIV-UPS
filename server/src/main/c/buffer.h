@@ -2,7 +2,7 @@
 /**
  *
  * @author: Patrik Harag
- * @version: 2017-10-07
+ * @version: 2017-10-16
  */
 
 #ifndef SERVER_BUFFER_H
@@ -39,6 +39,14 @@ void buffer_free(Buffer *buffer);
 void buffer_reset(Buffer* buffer);
 
 /**
+ * Shifts buffer left.
+ *
+ * @param buffer
+ * @param n
+ */
+void buffer_shift_left(Buffer* buffer, int n);
+
+/**
  * Adds char at the end of a buffer.
  *
  * @param buffer
@@ -63,7 +71,6 @@ void buffer_add_string(Buffer *buffer, char* string);
  * @return type
  */
 char* message_buffer_get_type(Buffer* buffer);
-
 
 /**
  * Gets message content from a buffer.

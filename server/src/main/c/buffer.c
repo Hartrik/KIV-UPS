@@ -2,7 +2,7 @@
 /**
  *
  * @author: Patrik Harag
- * @version: 2017-10-07
+ * @version: 2017-10-16
  */
 
 #include <stdlib.h>
@@ -23,6 +23,15 @@ void buffer_free(Buffer *buffer) {
 
 void buffer_reset(Buffer* buffer) {
     buffer->index = 0;
+}
+
+void buffer_shift_left(Buffer* buffer, int n) {
+    if (n == 0) return;
+
+    for (int i = 0; i < buffer->index - n; ++i) {
+        buffer->content[i] = buffer->content[i + n];
+    }
+    buffer->index -= n;
 }
 
 void buffer_add(Buffer *buffer, char c) {

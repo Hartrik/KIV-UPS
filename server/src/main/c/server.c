@@ -131,13 +131,26 @@ void* connection_handler(void* socket_desc) {
 
         // write
         if (session.to_send.index > 0) {
-            // TODO: exceptions handling
-            write(socket_fd, session.to_send.content, session.to_send.index);
+            ssize_t written = write(socket_fd, session.to_send.content, session.to_send.index);
+            if (written > 0) {
 
-            printf("  [%d] << %d B\n", socket_fd, (int) session.to_send.index);
-            fflush(stdout);
+                printf("  [%d] << %d B\n", socket_fd, (int) session.to_send.index);
+                fflush(stdout);
 
-            buffer_reset(&(session.to_send));
+                if (session.to_send.index == written) {
+                    buffer_reset(&session.to_send);
+                } else {
+                    printf("  [%d] not everything sent\n", socket_fd);
+                    buffer_shift_left(&session.to_send, (int) written);
+                }
+
+            } else {
+                // end of stream or timeout
+                if ((errno != EAGAIN) && (errno != EWOULDBLOCK)) {
+                    printf("  [%d] Error", socket_fd);
+                    perror("");
+                }
+            }
             sleep = false;
         }
 
