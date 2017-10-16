@@ -21,6 +21,7 @@
 #include "session.h"
 #include "protocol.h"
 #include "controller.h"
+#include "stats.h"
 
 
 static void* connection_handler(void *);
@@ -74,6 +75,7 @@ int server_start(int port) {
         int client_fd = accept(server_fd, &client, &client_len);
 
         if (client_fd > 0) {
+            stats_add_connections_established(1);
             printf("Connection accepted\n");
 
             pthread_t sniffer_thread;
@@ -133,6 +135,7 @@ void* connection_handler(void* socket_desc) {
         if (session.to_send.index > 0) {
             ssize_t written = write(socket_fd, session.to_send.content, session.to_send.index);
             if (written > 0) {
+                stats_add_bytes_sent(written);
 
                 printf("  [%d] << %d B\n", socket_fd, (int) session.to_send.index);
                 fflush(stdout);
@@ -157,6 +160,7 @@ void* connection_handler(void* socket_desc) {
         // read
         ssize_t recv_size = recv(socket_fd, socket_buffer, SERVER_SOCKET_BUFFER_SIZE, 0);
         if (recv_size > 0) {
+            stats_add_bytes_received(recv_size);
             session.last_activity = utils_current_millis();
 
             for (int i = 0; i < recv_size; ++i) {
@@ -176,7 +180,7 @@ void* connection_handler(void* socket_desc) {
                     }
                 } else {
                     if (message_buffer.index == PROTOCOL_TYPE_SIZE) {
-                        // divide message type and its content
+                        // split message type and its content
                         buffer_add(&message_buffer, 0);
                     }
 

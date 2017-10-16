@@ -13,6 +13,7 @@
 #include "game_pool.h"
 #include "shared.h"
 #include "utils.h"
+#include "stats.h"
 
 #define PORT 8076
 
@@ -37,6 +38,8 @@ void init_SIGINT_handler() {
 int main() {
     init_SIGINT_handler();
 
+    stats_init();
+
     if (pthread_mutex_init(&shared_lock, NULL) != 0) {
         printf("Mutex init failed\n");
         return 1;
@@ -48,6 +51,9 @@ int main() {
 
     gp_free(&game_pool);
     pthread_mutex_destroy(&shared_lock);
+
+    stats_store();
+    stats_free();
 
     return ret;
 }

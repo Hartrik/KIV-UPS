@@ -15,6 +15,7 @@
 #include "utils.h"
 #include "server.h"
 #include "shared.h"
+#include "stats.h"
 
 static void check_timeout(Session *session, unsigned long long time) {
     unsigned long long last_activity_diff = time - session->last_activity;
@@ -73,6 +74,8 @@ static bool parse_number(char* string, long* i) {
 }
 
 bool controller_process_message(Session *session, char *type, char *content) {
+    stats_add_messages_received(1);
+
     printf("  [%d] Message: type='%s' content='%s'\n",
            session->socket_fd, type, content);
     fflush(stdout);
@@ -219,6 +222,7 @@ bool controller_process_message(Session *session, char *type, char *content) {
 
 void controller_send(Session* session, char* type, char* content) {
     assert(strlen(type) == 3);
+    stats_add_messages_sent(1);
 
     Buffer* buffer = &(session->to_send);
 
