@@ -57,6 +57,12 @@ int server_start(int port) {
 
     c = sizeof(struct sockaddr_in);
     while ((client_socket = accept(socket_desc, (struct sockaddr *) &client, (socklen_t *) &c))) {
+
+        if (client_socket < 0) {
+            perror("Accept failed");
+            return 1;
+        }
+
         printf("Connection accepted\n");
 
         pthread_t sniffer_thread;
@@ -67,11 +73,6 @@ int server_start(int port) {
             perror("Could not create thread");
             return 1;
         }
-    }
-
-    if (client_socket < 0) {
-        perror("Accept failed");
-        return 1;
     }
 
     return 0;
