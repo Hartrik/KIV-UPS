@@ -121,11 +121,9 @@ void* connection_handler(void* socket_desc) {
     Buffer message_buffer;
     buffer_init(&message_buffer, SERVER_MSG_BUFFER_SIZE);
 
-    bool exit = false;
-
     printf("  [%d] Listening...\n", socket_fd);
 
-    while (!exit && !TERMINATED) {
+    while (session.status == SESSION_STATUS_CONNECTED && !TERMINATED) {
         unsigned long long cycle_start = utils_current_millis();
         bool sleep = true;
 
@@ -173,7 +171,7 @@ void* connection_handler(void* socket_desc) {
                         char *type = message_buffer_get_type(&message_buffer);
                         char *content = message_buffer_get_content(&message_buffer);
 
-                        exit |= controller_process_message(&session, type, content);
+                        controller_process_message(&session, type, content);
 
                         // reset buffer
                         buffer_reset(&message_buffer);
@@ -211,7 +209,7 @@ void* connection_handler(void* socket_desc) {
         unsigned long long diff = cycle_end - session.last_activity;
         if (diff > SERVER_TIMEOUT) {
             printf("  [%d] Timeout (after %llu ms)\n", socket_fd, diff);
-            exit = true;
+            session.status = SESSION_STATUS_SHOULD_DISCONNECT;
         }
     }
 

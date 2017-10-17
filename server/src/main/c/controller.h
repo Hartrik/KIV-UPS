@@ -12,7 +12,7 @@
 
 void controller_update(Session *session, unsigned long long int i);
 
-bool controller_process_message(Session *session, char *type, char *content);
+void controller_process_message(Session *session, char *type, char *content);
 
 void controller_send(Session* session, char* type, char* content);
 void controller_send_int(Session* session, char* type, int content);

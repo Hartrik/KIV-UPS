@@ -73,7 +73,7 @@ static bool parse_number(char* string, long* i) {
     return true;
 }
 
-bool controller_process_message(Session *session, char *type, char *content) {
+void controller_process_message(Session *session, char *type, char *content) {
     stats_add_messages_received(1);
 
     printf("  [%d] Message: type='%s' content='%s'\n",
@@ -81,7 +81,7 @@ bool controller_process_message(Session *session, char *type, char *content) {
     fflush(stdout);
 
     if (strncmp(type, "BYE", 3) == 0) {
-        return true;
+        session->status = SESSION_STATUS_SHOULD_DISCONNECT;
 
     } else if (strncmp(type, "PIN", 3) == 0) {
         // nothing
@@ -216,8 +216,6 @@ bool controller_process_message(Session *session, char *type, char *content) {
     } else {
         printf("  [%d] - Unknown command: %s\n", session->socket_fd, type);
     }
-
-    return false;
 }
 
 void controller_send(Session* session, char* type, char* content) {

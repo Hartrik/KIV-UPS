@@ -2,7 +2,7 @@
 /**
  *
  * @author: Patrik Harag
- * @version: 2017-10-12
+ * @version: 2017-10-17
  */
 
 #ifndef SERVER_SESSION_H
@@ -16,7 +16,15 @@
 #define SESSION_PLAYER_MIN_NAME_LENGTH 1
 #define SESSION_PLAYER_MAX_NAME_LENGTH 12
 
+typedef enum {
+    SESSION_STATUS_CONNECTED,
+    SESSION_STATUS_SHOULD_DISCONNECT,
+    SESSION_STATUS_DISCONNECTED
+} SessionStatus;
+
 typedef struct _Session {
+
+    SessionStatus status;
 
     int socket_fd;
     unsigned long long last_activity;

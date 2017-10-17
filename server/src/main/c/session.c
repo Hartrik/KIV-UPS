@@ -2,13 +2,14 @@
 /**
  *
  * @author: Patrik Harag
- * @version: 2017-10-14
+ * @version: 2017-10-17
  */
 
 #include <memory.h>
 #include "session.h"
 
 void session_init(Session *session, int socket_fd) {
+    session->status = SESSION_STATUS_CONNECTED;
     session->socket_fd = socket_fd;
     session->last_activity = 0;
     session->last_ping = 0;
