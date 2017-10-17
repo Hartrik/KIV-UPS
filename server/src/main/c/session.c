@@ -8,9 +8,9 @@
 #include <memory.h>
 #include "session.h"
 
-void session_init(Session *session, int socket_fd) {
+void session_init(Session *session) {
     session->status = SESSION_STATUS_CONNECTED;
-    session->socket_fd = socket_fd;
+    session->socket_fd = -1;
     session->last_activity = 0;
     session->last_ping = 0;
     session->corrupted_messages = 0;
