@@ -211,6 +211,12 @@ void* connection_handler(void* socket_desc) {
             printf("  [%d] Timeout (after %llu ms)\n", socket_fd, diff);
             session.status = SESSION_STATUS_SHOULD_DISCONNECT;
         }
+
+        // corrupted messages
+        if (session.corrupted_messages > SERVER_MAX_CORRUPTED_MESSAGES) {
+            printf("  [%d] Too many corrupted messages\n", socket_fd);
+            session.status = SESSION_STATUS_SHOULD_DISCONNECT;
+        }
     }
 
     printf("  [%d] Client disconnected\n", socket_fd);

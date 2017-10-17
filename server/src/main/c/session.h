@@ -30,6 +30,7 @@ typedef struct _Session {
     unsigned long long last_activity;
     unsigned long long last_ping;
     Buffer to_send;
+    int corrupted_messages;
 
     char name[SESSION_PLAYER_MAX_NAME_LENGTH + 1];
     Game* game;

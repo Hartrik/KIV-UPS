@@ -13,6 +13,7 @@ void session_init(Session *session, int socket_fd) {
     session->socket_fd = socket_fd;
     session->last_activity = 0;
     session->last_ping = 0;
+    session->corrupted_messages = 0;
     memset(session->name, 0, sizeof(session->name));
     session->game = NULL;
     buffer_init(&(session->to_send), SESSION_BUFFER_DEFAULT_CAPACITY);

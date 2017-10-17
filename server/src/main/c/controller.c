@@ -214,6 +214,7 @@ void controller_process_message(Session *session, char *type, char *content) {
         }
 
     } else {
+        session->corrupted_messages++;
         printf("  [%d] - Unknown command: %s\n", session->socket_fd, type);
     }
 }
