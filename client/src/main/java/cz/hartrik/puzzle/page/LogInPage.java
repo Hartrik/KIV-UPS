@@ -20,7 +20,7 @@ import javafx.scene.text.Text;
 
 /**
  * @author Patrik Harag
- * @version 2017-10-10
+ * @version 2017-10-17
  */
 public class LogInPage implements Page {
 
@@ -68,6 +68,7 @@ public class LogInPage implements Page {
 
         Connection connection = ConnectionProvider.lazyConnect();
         ConnectionHolder holder = new ConnectionHolder(connection);
+        application.setConnection(holder);
 
         holder.async(c -> {
             Future<LogInResponse> future = c.sendLogIn(name);
@@ -77,7 +78,7 @@ public class LogInPage implements Page {
                 Exceptions.silent(c::close);
                 throw new RuntimeException("Error when logging in: " + response);
             } else {
-                Page page = new MenuPage(application, holder, this);
+                Page page = new MenuPage(application, this);
                 application.setActivePage(page);
             }
 

@@ -1,38 +1,51 @@
 package cz.hartrik.puzzle.page.game;
 
-import cz.hartrik.puzzle.net.ConnectionHolder;
+import cz.hartrik.puzzle.Application;
 import cz.hartrik.puzzle.net.protocol.GameStateResponse;
 import cz.hartrik.puzzle.page.Page;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
+import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
+import javafx.application.Platform;
 import javafx.scene.Node;
+import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.image.Image;
+import javafx.scene.layout.HBox;
 import javafx.scene.layout.Pane;
+import javafx.scene.layout.Priority;
+import javafx.scene.layout.VBox;
+import javafx.scene.text.Font;
 
 /**
  *
  * @author Patrik Harag
- * @version 2017-10-15
+ * @version 2017-10-17
  */
 public class PuzzlePage implements Page {
 
-    private final ConnectionHolder connection;
+    private final Application application;
+    private final int gameID;
     private final Image image;
 
     private List<Piece> pieces;
     private Pane desk;
 
-    public PuzzlePage(ConnectionHolder connection, Image image, GameStateResponse initial) {
-        this.connection = connection;
+    public PuzzlePage(Application application, int gameID,
+                      GameStateResponse initial, Image image) {
+
+        this.application = application;
+        this.gameID = gameID;
         this.image = image;
-        createContent(initial);
+        this.desk = createDesk(initial);
     }
 
-    private void createContent(GameStateResponse initialState) {
+    private Pane createDesk(GameStateResponse initialState) {
         int numOfColumns = (int) (image.getWidth() / Piece.SIZE);
         int numOfRows = (int) (image.getHeight() / Piece.SIZE);
-        this.desk = new Pane();
+        Pane desk = new Pane();
 
         this.pieces = new ArrayList<>();
         for (int col = 0; col < numOfColumns; col++) {
@@ -50,6 +63,43 @@ public class PuzzlePage implements Page {
                 desk.getChildren().add(piece.getNode());
             }
         }
+        return desk;
+    }
+
+    private VBox createRightPanel() {
+        VBox rightPanel = new VBox();
+        rightPanel.getStyleClass().add("right-panel");
+        rightPanel.setMinWidth(150);
+        HBox.setHgrow(rightPanel, Priority.NEVER);
+
+        Label players = new Label("Players");
+        players.getStyleClass().add("title");
+
+        Label playersContent = new Label();
+        players.setFont(Font.font(12));
+
+        rightPanel.getChildren().setAll(players, playersContent);
+
+        application.getConnection().async(
+            c -> {
+                while (true) {
+                    Set<String> list = c.sendPlayerList(gameID)
+                            .get(2000, TimeUnit.MILLISECONDS);
+
+                    Platform.runLater(() -> {
+                        String text = list.stream().collect(Collectors.joining("\n"));
+                        playersContent.setText(text);
+                    });
+
+                    Thread.sleep(200);
+                }
+            },
+            e -> {
+                // ignored, not important...
+            }
+        );
+
+        return rightPanel;
     }
 
     @Override
@@ -63,7 +113,8 @@ public class PuzzlePage implements Page {
         });
 
         scrollPane.setContent(desk);
-        return scrollPane;
+
+        return new HBox(scrollPane, createRightPanel());
     }
 
 }

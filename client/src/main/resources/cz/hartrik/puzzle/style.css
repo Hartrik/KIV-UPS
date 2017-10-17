@@ -3,6 +3,15 @@
     -fx-base: rgb(210, 210, 210);
 }
 
+.right-panel {
+    -fx-padding: 10px;
+    -fx-spacing: 10px;
+}
+
+.right-panel .title {
+    -fx-font-weight: bold;
+}
+
 /***********************************************
     CONSOLE
 ************************************************/

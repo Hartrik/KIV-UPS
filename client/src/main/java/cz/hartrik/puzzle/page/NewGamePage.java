@@ -1,7 +1,7 @@
 package cz.hartrik.puzzle.page;
 
 import cz.hartrik.puzzle.Application;
-import cz.hartrik.puzzle.net.ConnectionHolder;
+import cz.hartrik.puzzle.net.protocol.GameListResponse;
 import cz.hartrik.puzzle.net.protocol.GameStateResponse;
 import cz.hartrik.puzzle.net.protocol.JoinGameResponse;
 import cz.hartrik.puzzle.net.protocol.NewGameResponse;
@@ -22,7 +22,7 @@ import javafx.scene.layout.FlowPane;
  * A page with a new game selection.
  *
  * @author Patrik Harag
- * @version 2017-10-15
+ * @version 2017-10-17
  */
 public class NewGamePage extends CancelablePage {
 
@@ -31,8 +31,8 @@ public class NewGamePage extends CancelablePage {
 
     private static final String TITLE = "New Game";
 
-    public NewGamePage(Application app, ConnectionHolder conn, Page previousPage) {
-        super(app, conn, TITLE, previousPage);
+    public NewGamePage(Application app, Page previousPage) {
+        super(app, TITLE, previousPage);
     }
 
     @Override
@@ -68,7 +68,7 @@ public class NewGamePage extends CancelablePage {
 
     private void onNewGame(int w, int h, Image image) {
         application.setActivePage(new LoadingPage());
-        connection.async(
+        application.getConnection().async(
             c -> {
                 Future<NewGameResponse> newF = c.sendNewGame(w, h);
                 NewGameResponse newR = newF.get(2000, TimeUnit.MILLISECONDS);
@@ -94,7 +94,7 @@ public class NewGamePage extends CancelablePage {
                     return;
                 }
 
-                application.setActivePage(new PuzzlePage(connection, image, stateR));
+                application.setActivePage(new PuzzlePage(application, newR.getGameID(), stateR, image));
             },
             e -> {
                 Page page = new ErrorPage(application, this, e.toString());

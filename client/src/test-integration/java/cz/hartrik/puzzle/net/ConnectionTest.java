@@ -6,7 +6,9 @@ import cz.hartrik.puzzle.net.protocol.LogInResponse;
 import cz.hartrik.puzzle.net.protocol.LogOutResponse;
 import cz.hartrik.puzzle.net.protocol.NewGameResponse;
 import java.util.Arrays;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.Future;
 import org.junit.Test;
 
@@ -180,6 +182,26 @@ public class ConnectionTest {
 
             Future<JoinGameResponse> join = connection.sendJoinGame(game.get().getGameID());
             assertThat(join.get(), is(JoinGameResponse.OK));
+        }
+    }
+
+    // GPL
+
+    @Test(timeout = DEFAULT_TIMEOUT)
+    public void testPlayerList() throws Exception {
+        try (Connection connection = ConnectionProvider.connect()) {
+            Future<LogInResponse> response = connection.sendLogIn("Nick");
+            assertThat(response.get(), is(LogInResponse.OK));
+
+            Future<NewGameResponse> game = connection.sendNewGame(10, 5);
+            assertThat(game.get().getStatus(), is(NewGameResponse.Status.OK));
+            assertThat(game.get().getGameID() >= 0, is(true));
+
+            Future<JoinGameResponse> join = connection.sendJoinGame(game.get().getGameID());
+            assertThat(join.get(), is(JoinGameResponse.OK));
+
+            Future<Set<String>> players = connection.sendPlayerList(game.get().getGameID());
+            assertThat(players.get(), is(new LinkedHashSet<>(Arrays.asList("Nick"))));
         }
     }
 

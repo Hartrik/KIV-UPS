@@ -1,5 +1,6 @@
 package cz.hartrik.puzzle;
 
+import cz.hartrik.puzzle.net.ConnectionHolder;
 import cz.hartrik.puzzle.page.Page;
 import cz.hartrik.puzzle.service.ServiceManager;
 import javafx.application.Platform;
@@ -14,6 +15,8 @@ public class Application {
     private final FrameStage frameStage;
     private final FrameController controller;
     private final ServiceManager serviceManager;
+
+    private ConnectionHolder connection;
 
     public Application(FrameStage frameStage, FrameController controller) {
         this.frameStage = frameStage;
@@ -38,5 +41,13 @@ public class Application {
             getController().setActivePage(activePage);
         else
             Platform.runLater(() -> getController().setActivePage(activePage));
+    }
+
+    public void setConnection(ConnectionHolder connection) {
+        this.connection = connection;
+    }
+
+    public ConnectionHolder getConnection() {
+        return connection;
     }
 }

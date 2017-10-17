@@ -137,6 +137,37 @@ void controller_process_message(Session *session, char *type, char *content) {
             controller_send(session, "GLI", "");
         }
 
+    } else if (strncmp(type, "GPL", 3) == 0) {
+        long id;
+        if (session_is_logged(session) && parse_number(content, &id)) {
+
+            pthread_mutex_lock(&shared_lock);
+            Game* game = gp_find_game(&game_pool, (int) id);
+
+            if (game != NULL) {
+                Buffer buffer;
+                buffer_init(&buffer, 16);
+
+                for (int i = 0; i < session_pool.sessions_size; ++i) {
+                    Session* s = session_pool.sessions[i];
+                    if (s->status == SESSION_STATUS_CONNECTED && s->game == game) {
+                        buffer_add_string(&buffer, s->name);
+                        buffer_add(&buffer, ',');
+                    }
+                }
+                buffer_add(&buffer, '\0');
+                controller_send(session, "GPL", buffer.content);
+
+                pthread_mutex_unlock(&shared_lock);
+            } else {
+                pthread_mutex_unlock(&shared_lock);
+                controller_send(session, "GPL", "");
+            }
+
+        } else {
+            controller_send(session, "GPL", "");
+        }
+
     } else if (strncmp(type, "GNW", 3) == 0) {
         long w, h;
 
