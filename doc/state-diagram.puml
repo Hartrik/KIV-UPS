@@ -5,16 +5,16 @@ title Session (client view)
 
 state "Connected" as connected
 connected --> logged:LIN
-connected --> not_connected:BYE*
+connected --> not_connected:BYE,\nerror
 
 state "Logged" as logged
-logged --> not_connected:BYE*
+logged --> not_connected:BYE,\nerror
 logged --> game:GJO
 logged --> logged:GLI,\nGNW
 logged --> connected:LOF
 
 state "In game" as game
-game --> not_connected:BYE*
+game --> not_connected:BYE,\nerror
 game --> logged:GOF
 game --> game:GMV,\nGST
 
