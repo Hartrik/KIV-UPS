@@ -29,6 +29,7 @@ typedef enum {
  */
 typedef struct _Session {
 
+    int id;
     SessionStatus status;
 
     int socket_fd;

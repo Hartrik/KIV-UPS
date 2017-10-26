@@ -77,7 +77,7 @@ void controller_process_message(Session *session, char *type, char *content) {
     stats_add_messages_received(1);
 
     printf("  [%d] Message: type='%s' content='%s'\n",
-           session->socket_fd, type, content);
+           session->id, type, content);
     fflush(stdout);
 
     if (strncmp(type, "BYE", 3) == 0) {
@@ -101,7 +101,7 @@ void controller_process_message(Session *session, char *type, char *content) {
             // TODO: uživatelé se stejnými jmény
             strcpy(session->name, name);
             controller_send_int(session, "LIN", PROTOCOL_LIN_OK);
-            printf("  [%d] - User logged in: %s\n", session->socket_fd, session->name);
+            printf("  [%d] - User logged in: %s\n", session->id, session->name);
         }
 
     } else if (strncmp(type, "LOF", 3) == 0) {
@@ -110,7 +110,7 @@ void controller_process_message(Session *session, char *type, char *content) {
         } else {
             session->name[0] = 0;
             controller_send_int(session, "LOF", PROTOCOL_LOF_OK);
-            printf("  [%d] - User logged out", session->socket_fd);
+            printf("  [%d] - User logged out", session->id);
         }
 
     } else if (strncmp(type, "GLI", 3) == 0) {
@@ -175,7 +175,7 @@ void controller_process_message(Session *session, char *type, char *content) {
 
                 controller_send_int(session, "GNW", game->id);
                 printf("  [%d] - New game [id=%d, w=%ld, h=%ld]\n",
-                       session->socket_fd, game->id, w, h);
+                       session->id, game->id, w, h);
 
             } else {
                 controller_send_int(session, "GNW", PROTOCOL_GNW_WRONG_SIZE);
@@ -234,7 +234,7 @@ void controller_process_message(Session *session, char *type, char *content) {
 
     } else {
         session->corrupted_messages++;
-        printf("  [%d] - Unknown command: %s\n", session->socket_fd, type);
+        printf("  [%d] - Unknown command: %s\n", session->id, type);
     }
 }
 

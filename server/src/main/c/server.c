@@ -104,7 +104,7 @@ int server_start(int port) {
 
             shared_create_session(client_fd);
         } else {
-            utils_sleep(100);
+            utils_sleep(50);
         }
     } while (!TERMINATED);
 
@@ -145,7 +145,7 @@ void* game_thread_handler(void *arg) {
 
                 close(session->socket_fd);
 
-                printf("  [%d] Client disconnected\n", session->socket_fd);
+                printf("  [%d] Client disconnected\n", session->id);
             }
 
             fflush(stdout);
@@ -178,21 +178,22 @@ static void process_session(Session* session, char socket_buffer[SERVER_SOCKET_B
         if (written > 0) {
             stats_add_bytes_sent(written);
 
-            printf("  [%d] << %d B\n", socket_fd, (int) session->to_send.index);
+            printf("  [%d] << %d B\n", session->id, (int) session->to_send.index);
             fflush(stdout);
 
             if (session->to_send.index == written) {
                 buffer_reset(&session->to_send);
             } else {
-                printf("  [%d] not everything sent\n", socket_fd);
+                printf("  [%d] not everything sent\n", session->id);
                 buffer_shift_left(&session->to_send, (int) written);
             }
 
         } else {
             // end of stream or timeout
             if ((errno != EAGAIN) && (errno != EWOULDBLOCK)) {
-                printf("  [%d] Error", socket_fd);
+                printf("  [%d] Error", session->id);
                 perror("");
+                session->status = SESSION_STATUS_SHOULD_DISCONNECT;
             }
         }
     }
@@ -231,8 +232,9 @@ static void process_session(Session* session, char socket_buffer[SERVER_SOCKET_B
     } else if (recv_size == -1) {
         // end of stream or timeout
         if ((errno != EAGAIN) && (errno != EWOULDBLOCK)) {
-            printf("  [%d] Error", socket_fd);
+            printf("  [%d] Error", session->id);
             perror("");
+            session->status = SESSION_STATUS_SHOULD_DISCONNECT;
         }
 
     } else {
@@ -243,13 +245,13 @@ static void process_session(Session* session, char socket_buffer[SERVER_SOCKET_B
     unsigned long long cycle_end = utils_current_millis();
     unsigned long long diff = cycle_end - session->last_activity;
     if (diff > SERVER_TIMEOUT) {
-        printf("  [%d] Timeout (after %llu ms)\n", socket_fd, diff);
+        printf("  [%d] Timeout (after %llu ms)\n", session->id, diff);
         session->status = SESSION_STATUS_SHOULD_DISCONNECT;
     }
 
     // corrupted messages
     if (session->corrupted_messages > SERVER_MAX_CORRUPTED_MESSAGES) {
-        printf("  [%d] Too many corrupted messages\n", socket_fd);
+        printf("  [%d] Too many corrupted messages\n", session->id);
         session->status = SESSION_STATUS_SHOULD_DISCONNECT;
     }
 }

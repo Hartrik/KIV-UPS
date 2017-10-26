@@ -2,7 +2,7 @@
 /**
  *
  * @author: Patrik Harag
- * @version: 2017-10-17
+ * @version: 2017-10-26
  */
 
 #include "session_pool.h"
@@ -28,10 +28,11 @@ void sp_init(SessionPool* session_pool) {
 Session* sp_create(SessionPool* session_pool) {
     Session* session = (Session *) calloc(1, sizeof(Session));
     session_init(session);
+    session->id = (int) session_pool->sessions_size;
 
     session_pool->sessions_size++;
     ensure_capacity(session_pool);
-    session_pool->sessions[session_pool->sessions_size - 1] = session;
+    session_pool->sessions[session->id] = session;
     return session;
 }
 

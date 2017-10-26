@@ -9,6 +9,7 @@
 #include "session.h"
 
 void session_init(Session *session) {
+    session->id = -1;
     session->status = SESSION_STATUS_CONNECTED;
     session->socket_fd = -1;
     session->last_activity = 0;
