@@ -3,7 +3,7 @@
  * Socket server, handles multiple clients using threads.
  *
  * @author: Patrik Harag
- * @version: 2017-10-16
+ * @version: 2017-10-26
  */
 
 #include <stdbool.h>
@@ -25,7 +25,25 @@
 #include "shared.h"
 
 
-static void* connection_handler(void *);
+static void* game_thread_handler(void *);
+static void process_session(Session* session, char socket_buffer[SERVER_SOCKET_BUFFER_SIZE], Buffer* message_buffer);
+
+static bool set_non_blocking(int fd) {
+    // Set accept to be non-blocking
+    int flags = fcntl(fd, F_GETFL, 0);
+    if (flags < 0) {
+        perror("Could not get fd flags");
+        return false;
+    }
+
+    int err = fcntl(fd, F_SETFL, flags | O_NONBLOCK);
+    if (err < 0) {
+        perror("Could not set fd to be non blocking");
+        return false;
+    }
+
+    return true;
+}
 
 int server_start(int port) {
     // Create socket
@@ -34,6 +52,10 @@ int server_start(int port) {
         printf("Could not create server socket\n");
     }
     printf("Server socket created\n");
+
+    // Fix /Address already in use/ error
+    int option = 1;
+    setsockopt(server_fd, SOL_SOCKET, SO_REUSEADDR, &option, sizeof(option));
 
     struct sockaddr_in server;
     server.sin_family = AF_INET;
@@ -48,17 +70,8 @@ int server_start(int port) {
     printf("Bind done\n");
 
     // Set accept to be non-blocking
-    int flags = fcntl(server_fd, F_GETFL, 0);
-    if (flags < 0) {
-        perror("Could not get server socket flags");
+    if (!set_non_blocking(server_fd))
         return 1;
-    }
-
-    int err = fcntl(server_fd, F_SETFL, flags | O_NONBLOCK);
-    if (err < 0) {
-        perror("Could set server socket to be non blocking");
-        return 1;
-    }
 
     // Listen
     if (listen(server_fd, SERVER_CONNECTION_QUEUE) < 0) {
@@ -66,7 +79,13 @@ int server_start(int port) {
         return 1;
     }
 
-    // Accept and incoming connection
+    // Create game thread
+    pthread_t thread;
+    if (pthread_create(&thread, NULL, game_thread_handler, NULL) < 0) {
+        perror("Could not create thread");
+        return 1;
+    }
+
     printf("Waiting for incoming connections...\n");
 
     do {
@@ -79,15 +98,11 @@ int server_start(int port) {
             stats_add_connections_established(1);
             printf("Connection accepted\n");
 
-            pthread_t sniffer_thread;
-            int *new_socket;
-            new_socket = malloc(1);
-            *new_socket = client_fd;
-
-            if (pthread_create(&sniffer_thread, NULL, connection_handler, new_socket) < 0) {
-                perror("Could not create thread");
+            // Set recv and write to be non-blocking
+            if (!set_non_blocking(client_fd))
                 return 1;
-            }
+
+            shared_create_session(client_fd);
         } else {
             utils_sleep(100);
         }
@@ -100,135 +115,141 @@ int server_start(int port) {
 }
 
 /**
- * This will handle connection for each client.
+ * Game thread handler.
  */
-void* connection_handler(void* socket_desc) {
+void* game_thread_handler(void *arg) {
     // Set up socket
-    int socket_fd = *(int *) socket_desc;
     char socket_buffer[SERVER_SOCKET_BUFFER_SIZE];
-
-    // Set up session
-    Session* session = shared_create_session();
-    session->socket_fd = socket_fd;
-    session->last_activity = utils_current_millis();
-
-    // Set up timeout
-    struct timeval timeout;
-    timeout.tv_sec = 0;
-    timeout.tv_usec = SERVER_CYCLE * 1000;
-    setsockopt(socket_fd, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof(timeout));
 
     // Set up message buffer
     Buffer message_buffer;
     buffer_init(&message_buffer, SERVER_MSG_BUFFER_SIZE);
 
-    printf("  [%d] Listening...\n", socket_fd);
+    printf("  Game thread active...\n");
 
-    while (session->status == SESSION_STATUS_CONNECTED && !TERMINATED) {
+    while (!TERMINATED) {
+        pthread_mutex_lock(&shared_lock);
+
         unsigned long long cycle_start = utils_current_millis();
-        bool sleep = true;
 
-        controller_update(session, cycle_start);
+        // process all active sessions
+        for (int i = 0; i < session_pool.sessions_size; ++i) {
+            Session* session = session_pool.sessions[i];
 
-        // write
-        if (session->to_send.index > 0) {
-            ssize_t written = write(socket_fd, session->to_send.content, session->to_send.index);
-            if (written > 0) {
-                stats_add_bytes_sent(written);
-
-                printf("  [%d] << %d B\n", socket_fd, (int) session->to_send.index);
-                fflush(stdout);
-
-                if (session->to_send.index == written) {
-                    buffer_reset(&session->to_send);
-                } else {
-                    printf("  [%d] not everything sent\n", socket_fd);
-                    buffer_shift_left(&session->to_send, (int) written);
-                }
-
-            } else {
-                // end of stream or timeout
-                if ((errno != EAGAIN) && (errno != EWOULDBLOCK)) {
-                    printf("  [%d] Error", socket_fd);
-                    perror("");
-                }
+            if (session->status == SESSION_STATUS_CONNECTED) {
+                process_session(session, socket_buffer, &message_buffer);
             }
-            sleep = false;
+
+            if (session->status == SESSION_STATUS_SHOULD_DISCONNECT) {
+                session->status = SESSION_STATUS_DISCONNECTED;
+
+                close(session->socket_fd);
+
+                printf("  [%d] Client disconnected\n", session->socket_fd);
+            }
+
+            fflush(stdout);
         }
 
-        // read
-        ssize_t recv_size = recv(socket_fd, socket_buffer, SERVER_SOCKET_BUFFER_SIZE, 0);
-        if (recv_size > 0) {
-            stats_add_bytes_received(recv_size);
-            session->last_activity = utils_current_millis();
+        unsigned long long cycle_end = utils_current_millis();
+        unsigned long long cycle = cycle_end - cycle_start;
+        if (cycle < SERVER_CYCLE) {
+            utils_sleep(SERVER_CYCLE - cycle);
+        }
 
-            for (int i = 0; i < recv_size; ++i) {
-                char c = socket_buffer[i];
-                if (c == PROTOCOL_MESSAGE_SEP) {
-                    // end of message
-                    if (message_buffer.index != 0) {
-                        buffer_add(&message_buffer, 0);
+        pthread_mutex_unlock(&shared_lock);
+    }
 
-                        char *type = message_buffer_get_type(&message_buffer);
-                        char *content = message_buffer_get_content(&message_buffer);
+    buffer_free(&message_buffer);
+    return 0;
+}
 
-                        controller_process_message(session, type, content);
+static void process_session(Session* session, char socket_buffer[SERVER_SOCKET_BUFFER_SIZE],
+                            Buffer* message_buffer) {
 
-                        // reset buffer
-                        buffer_reset(&message_buffer);
-                    }
-                } else {
-                    if (message_buffer.index == PROTOCOL_TYPE_SIZE) {
-                        // split message type and its content
-                        buffer_add(&message_buffer, 0);
-                    }
+    int socket_fd = session->socket_fd;
+    unsigned long long cycle_start = utils_current_millis();
 
-                    buffer_add(&message_buffer, socket_buffer[i]);
-                }
+    controller_update(session, cycle_start);
+
+    // write
+    if (session->to_send.index > 0) {
+        ssize_t written = write(socket_fd, session->to_send.content, session->to_send.index);
+        if (written > 0) {
+            stats_add_bytes_sent(written);
+
+            printf("  [%d] << %d B\n", socket_fd, (int) session->to_send.index);
+            fflush(stdout);
+
+            if (session->to_send.index == written) {
+                buffer_reset(&session->to_send);
+            } else {
+                printf("  [%d] not everything sent\n", socket_fd);
+                buffer_shift_left(&session->to_send, (int) written);
             }
-            sleep = false;
 
-        } else if (recv_size == -1) {
+        } else {
             // end of stream or timeout
             if ((errno != EAGAIN) && (errno != EWOULDBLOCK)) {
                 printf("  [%d] Error", socket_fd);
                 perror("");
             }
-
-        } else {
-            // no data...
-        }
-
-        // sleep
-        unsigned long long cycle_end = utils_current_millis();
-        unsigned long long cycle = cycle_end - cycle_start;
-        if (sleep && cycle < SERVER_CYCLE) {
-            utils_sleep(SERVER_CYCLE - cycle);
-        }
-
-        // timeout
-        unsigned long long diff = cycle_end - session->last_activity;
-        if (diff > SERVER_TIMEOUT) {
-            printf("  [%d] Timeout (after %llu ms)\n", socket_fd, diff);
-            session->status = SESSION_STATUS_SHOULD_DISCONNECT;
-        }
-
-        // corrupted messages
-        if (session->corrupted_messages > SERVER_MAX_CORRUPTED_MESSAGES) {
-            printf("  [%d] Too many corrupted messages\n", socket_fd);
-            session->status = SESSION_STATUS_SHOULD_DISCONNECT;
         }
     }
 
-    session->status = SESSION_STATUS_DISCONNECTED;
+    // read
+    ssize_t recv_size = recv(socket_fd, socket_buffer, SERVER_SOCKET_BUFFER_SIZE, 0);
+    if (recv_size > 0) {
+        stats_add_bytes_received(recv_size);
+        session->last_activity = utils_current_millis();
 
-    printf("  [%d] Client disconnected\n", socket_fd);
-    fflush(stdout);
+        for (int i = 0; i < recv_size; ++i) {
+            char c = socket_buffer[i];
+            if (c == PROTOCOL_MESSAGE_SEP) {
+                // end of message
+                if (message_buffer->index != 0) {
+                    buffer_add(message_buffer, 0);
 
-    close(socket_fd);
+                    char *type = message_buffer_get_type(message_buffer);
+                    char *content = message_buffer_get_content(message_buffer);
 
-    buffer_free(&message_buffer);
-    free(socket_desc);
+                    controller_process_message(session, type, content);
 
-    return 0;
+                    // reset buffer
+                    buffer_reset(message_buffer);
+                }
+            } else {
+                if (message_buffer->index == PROTOCOL_TYPE_SIZE) {
+                    // split message type and its content
+                    buffer_add(message_buffer, 0);
+                }
+
+                buffer_add(message_buffer, socket_buffer[i]);
+            }
+        }
+
+    } else if (recv_size == -1) {
+        // end of stream or timeout
+        if ((errno != EAGAIN) && (errno != EWOULDBLOCK)) {
+            printf("  [%d] Error", socket_fd);
+            perror("");
+        }
+
+    } else {
+        // no data...
+    }
+
+    // timeout
+    unsigned long long cycle_end = utils_current_millis();
+    unsigned long long diff = cycle_end - session->last_activity;
+    if (diff > SERVER_TIMEOUT) {
+        printf("  [%d] Timeout (after %llu ms)\n", socket_fd, diff);
+        session->status = SESSION_STATUS_SHOULD_DISCONNECT;
+    }
+
+    // corrupted messages
+    if (session->corrupted_messages > SERVER_MAX_CORRUPTED_MESSAGES) {
+        printf("  [%d] Too many corrupted messages\n", socket_fd);
+        session->status = SESSION_STATUS_SHOULD_DISCONNECT;
+    }
 }

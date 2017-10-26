@@ -2,7 +2,7 @@
 /**
  *
  * @author: Patrik Harag
- * @version: 2017-10-17
+ * @version: 2017-10-26
  */
 
 #ifndef SERVER_SESSION_H
@@ -47,5 +47,8 @@ void session_free(Session* session);
 
 bool session_is_logged(Session* session);
 bool session_is_in_game(Session* session);
+
+bool session_can_create_game(Session *session);
+bool session_can_join_game(Session *session);
 
 #endif

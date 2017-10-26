@@ -2,11 +2,12 @@
 /**
  *
  * @author: Patrik Harag
- * @version: 2017-10-14
+ * @version: 2017-10-26
  */
 
 #include <stdlib.h>
 #include "game_pool.h"
+#include "session.h"
 
 static void ensure_capacity(GamePool* game_pool) {
     if (game_pool->games_capacity >= game_pool->games_size + 1)
@@ -46,6 +47,15 @@ Game *gp_find_game(GamePool *game_pool, int id) {
             return game;
     }
     return NULL;
+}
+
+Game* gp_join_game(GamePool* game_pool, Session *session, int game_id) {
+    Game* game = gp_find_game(game_pool, game_id);
+    if (game != NULL) {
+        session->game = game;
+    }
+
+    return game;
 }
 
 void gp_free(GamePool* game_pool) {

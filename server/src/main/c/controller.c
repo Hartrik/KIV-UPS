@@ -115,7 +115,6 @@ void controller_process_message(Session *session, char *type, char *content) {
 
     } else if (strncmp(type, "GLI", 3) == 0) {
         if (session_is_logged(session)) {
-            pthread_mutex_lock(&shared_lock);
 
             size_t count = game_pool.games_size;
             char str[3 * count * 1  // separators
@@ -129,8 +128,6 @@ void controller_process_message(Session *session, char *type, char *content) {
                 last += sprintf(str + last, "%d,%d,%d;", game->id, game->w, game->h);
             }
 
-            pthread_mutex_unlock(&shared_lock);
-
             controller_send(session, "GLI", str);
 
         } else {
@@ -141,7 +138,6 @@ void controller_process_message(Session *session, char *type, char *content) {
         long id;
         if (session_is_logged(session) && parse_number(content, &id)) {
 
-            pthread_mutex_lock(&shared_lock);
             Game* game = gp_find_game(&game_pool, (int) id);
 
             if (game != NULL) {
@@ -158,9 +154,7 @@ void controller_process_message(Session *session, char *type, char *content) {
                 buffer_add(&buffer, '\0');
                 controller_send(session, "GPL", buffer.content);
 
-                pthread_mutex_unlock(&shared_lock);
             } else {
-                pthread_mutex_unlock(&shared_lock);
                 controller_send(session, "GPL", "");
             }
 
@@ -171,14 +165,13 @@ void controller_process_message(Session *session, char *type, char *content) {
     } else if (strncmp(type, "GNW", 3) == 0) {
         long w, h;
 
-        if (!shared_can_create_game(session)) {
+        if (!session_can_create_game(session)) {
             controller_send_int(session, "GNW", PROTOCOL_GNW_NO_PERMISSIONS);
         } else if (parse_size(content, &w, &h)) {
             if (w >= GAME_MIN_SIZE && w <= GAME_MAX_SIZE
                     && h >= GAME_MIN_SIZE && h <= GAME_MAX_SIZE) {
 
-                Game* game = shared_create_game(
-                        session, (unsigned int) w, (unsigned int) h);
+                Game* game = gp_create_game(&game_pool, (unsigned int) w, (unsigned int) h);
 
                 controller_send_int(session, "GNW", game->id);
                 printf("  [%d] - New game [id=%d, w=%ld, h=%ld]\n",
@@ -192,12 +185,12 @@ void controller_process_message(Session *session, char *type, char *content) {
         }
 
     } else if (strncmp(type, "GJO", 3) == 0) {
-        if (!shared_can_join_game(session)) {
+        if (!session_can_join_game(session)) {
             controller_send_int(session, "GJO", PROTOCOL_GJO_NO_PERMISSIONS);
         } else {
             long id;
             if (parse_number(content, &id)) {
-                Game* game = shared_join_game(session, (int) id);
+                Game* game = gp_join_game(&game_pool, session, (int) id);
                 if (game != NULL) {
                     controller_send_int(session, "GJO", PROTOCOL_GJO_OK);
                 } else {
@@ -215,7 +208,6 @@ void controller_process_message(Session *session, char *type, char *content) {
         long id;
 
         if (session_is_logged(session) && parse_number(content, &id)) {
-            pthread_mutex_lock(&shared_lock);
 
             Game* game = gp_find_game(&game_pool, (int) id);
             if (game != NULL) {
@@ -230,13 +222,9 @@ void controller_process_message(Session *session, char *type, char *content) {
                     last += sprintf(str + last, "%d,%d;", p->x, p->y);
                 }
 
-                pthread_mutex_unlock(&shared_lock);
-
                 controller_send(session, "GST", str);
 
             } else {
-                pthread_mutex_unlock(&shared_lock);
-
                 controller_send(session, "GST", "error");
             }
 
