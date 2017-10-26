@@ -1,7 +1,6 @@
 package cz.hartrik.puzzle.page;
 
 import cz.hartrik.puzzle.Application;
-import cz.hartrik.puzzle.net.ConnectionHolder;
 import javafx.scene.Node;
 import javafx.scene.control.Button;
 import javafx.scene.control.ToolBar;
@@ -16,16 +15,15 @@ import javafx.scene.text.Text;
  * A page with a cancel button.
  *
  * @author Patrik Harag
- * @version 2017-10-15
+ * @version 2017-10-17
  */
 public abstract class CancelablePage extends PageBase {
 
     private final String title;
     private final Page previousPage;
 
-    public CancelablePage(Application app, ConnectionHolder conn, String title,
-                          Page previousPage) {
-        super(app, conn);
+    public CancelablePage(Application app, String title, Page previousPage) {
+        super(app);
         this.title = title;
         this.previousPage = previousPage;
     }

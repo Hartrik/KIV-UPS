@@ -6,12 +6,15 @@ import java.io.*;
 import java.net.Socket;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * @author Patrik Harag
- * @version 2017-10-14
+ * @version 2017-10-17
  */
 public class Connection implements AutoCloseable {
 
@@ -167,6 +170,22 @@ public class Connection implements AutoCloseable {
         }));
 
         sendMessage("GLI", "");
+
+        return future;
+    }
+
+    public Future<Set<String>> sendPlayerList(int gameID) throws Exception {
+        connect();
+
+        CompletableFuture<Set<String>> future = new CompletableFuture<>();
+        reader.addConsumer("GPL", MessageConsumer.temporary(response -> {
+            Set<String> players = Stream.of(response.split(","))
+                    .filter(s -> !s.isEmpty())
+                    .collect(Collectors.toSet());
+            future.complete(players);
+        }));
+
+        sendMessage("GPL", "" + gameID);
 
         return future;
     }

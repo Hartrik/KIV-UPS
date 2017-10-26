@@ -2,7 +2,7 @@
 /**
  *
  * @author: Patrik Harag
- * @version: 2017-10-16
+ * @version: 2017-10-17
  */
 
 #include <pthread.h>
@@ -16,6 +16,17 @@ void shared_init() {
     }
 
     gp_init(&game_pool);
+    sp_init(&session_pool);
+}
+
+Session* shared_create_session() {
+    pthread_mutex_lock(&shared_lock);
+
+    Session* session = sp_create(&session_pool);
+
+    pthread_mutex_unlock(&shared_lock);
+
+    return session;
 }
 
 bool shared_can_create_game(Session* session) {
@@ -63,6 +74,7 @@ Game* shared_create_game(Session* session, unsigned int w, unsigned int h) {
 }
 
 void shared_free() {
+    sp_free(&session_pool);
     gp_free(&game_pool);
     pthread_mutex_destroy(&shared_lock);
 }

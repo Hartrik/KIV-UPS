@@ -2,7 +2,7 @@
 /**
  *
  * @author: Patrik Harag
- * @version: 2017-10-16
+ * @version: 2017-10-17
  */
 
 #ifndef SERVER_SERVER_H
@@ -15,6 +15,7 @@
 #define SERVER_CONNECTION_QUEUE 10  /* how many pending connections queue will hold */
 #define SERVER_TIMEOUT 2000  /* ms */
 #define SERVER_CYCLE 100  /* ms */
+#define SERVER_MAX_CORRUPTED_MESSAGES 50  /* per session */
 
 bool TERMINATED;
 

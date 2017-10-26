@@ -22,6 +22,7 @@
 #include "protocol.h"
 #include "controller.h"
 #include "stats.h"
+#include "shared.h"
 
 
 static void* connection_handler(void *);
@@ -107,9 +108,9 @@ void* connection_handler(void* socket_desc) {
     char socket_buffer[SERVER_SOCKET_BUFFER_SIZE];
 
     // Set up session
-    Session session;
-    session_init(&session, socket_fd);
-    session.last_activity = utils_current_millis();
+    Session* session = shared_create_session();
+    session->socket_fd = socket_fd;
+    session->last_activity = utils_current_millis();
 
     // Set up timeout
     struct timeval timeout;
@@ -121,30 +122,28 @@ void* connection_handler(void* socket_desc) {
     Buffer message_buffer;
     buffer_init(&message_buffer, SERVER_MSG_BUFFER_SIZE);
 
-    bool exit = false;
-
     printf("  [%d] Listening...\n", socket_fd);
 
-    while (!exit && !TERMINATED) {
+    while (session->status == SESSION_STATUS_CONNECTED && !TERMINATED) {
         unsigned long long cycle_start = utils_current_millis();
         bool sleep = true;
 
-        controller_update(&session, cycle_start);
+        controller_update(session, cycle_start);
 
         // write
-        if (session.to_send.index > 0) {
-            ssize_t written = write(socket_fd, session.to_send.content, session.to_send.index);
+        if (session->to_send.index > 0) {
+            ssize_t written = write(socket_fd, session->to_send.content, session->to_send.index);
             if (written > 0) {
                 stats_add_bytes_sent(written);
 
-                printf("  [%d] << %d B\n", socket_fd, (int) session.to_send.index);
+                printf("  [%d] << %d B\n", socket_fd, (int) session->to_send.index);
                 fflush(stdout);
 
-                if (session.to_send.index == written) {
-                    buffer_reset(&session.to_send);
+                if (session->to_send.index == written) {
+                    buffer_reset(&session->to_send);
                 } else {
                     printf("  [%d] not everything sent\n", socket_fd);
-                    buffer_shift_left(&session.to_send, (int) written);
+                    buffer_shift_left(&session->to_send, (int) written);
                 }
 
             } else {
@@ -161,7 +160,7 @@ void* connection_handler(void* socket_desc) {
         ssize_t recv_size = recv(socket_fd, socket_buffer, SERVER_SOCKET_BUFFER_SIZE, 0);
         if (recv_size > 0) {
             stats_add_bytes_received(recv_size);
-            session.last_activity = utils_current_millis();
+            session->last_activity = utils_current_millis();
 
             for (int i = 0; i < recv_size; ++i) {
                 char c = socket_buffer[i];
@@ -173,7 +172,7 @@ void* connection_handler(void* socket_desc) {
                         char *type = message_buffer_get_type(&message_buffer);
                         char *content = message_buffer_get_content(&message_buffer);
 
-                        exit |= controller_process_message(&session, type, content);
+                        controller_process_message(session, type, content);
 
                         // reset buffer
                         buffer_reset(&message_buffer);
@@ -208,19 +207,26 @@ void* connection_handler(void* socket_desc) {
         }
 
         // timeout
-        unsigned long long diff = cycle_end - session.last_activity;
+        unsigned long long diff = cycle_end - session->last_activity;
         if (diff > SERVER_TIMEOUT) {
             printf("  [%d] Timeout (after %llu ms)\n", socket_fd, diff);
-            exit = true;
+            session->status = SESSION_STATUS_SHOULD_DISCONNECT;
+        }
+
+        // corrupted messages
+        if (session->corrupted_messages > SERVER_MAX_CORRUPTED_MESSAGES) {
+            printf("  [%d] Too many corrupted messages\n", socket_fd);
+            session->status = SESSION_STATUS_SHOULD_DISCONNECT;
         }
     }
+
+    session->status = SESSION_STATUS_DISCONNECTED;
 
     printf("  [%d] Client disconnected\n", socket_fd);
     fflush(stdout);
 
     close(socket_fd);
 
-    session_free(&session);
     buffer_free(&message_buffer);
     free(socket_desc);
 

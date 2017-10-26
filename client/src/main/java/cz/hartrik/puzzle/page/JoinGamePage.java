@@ -1,7 +1,6 @@
 package cz.hartrik.puzzle.page;
 
 import cz.hartrik.puzzle.Application;
-import cz.hartrik.puzzle.net.ConnectionHolder;
 import cz.hartrik.puzzle.net.protocol.GameListResponse;
 import cz.hartrik.puzzle.net.protocol.GameStateResponse;
 import cz.hartrik.puzzle.net.protocol.JoinGameResponse;
@@ -25,7 +24,7 @@ import javafx.scene.text.Font;
  * A page with a game selection.
  *
  * @author Patrik Harag
- * @version 2017-10-15
+ * @version 2017-10-17
  */
 public class JoinGamePage extends CancelablePage {
 
@@ -36,8 +35,8 @@ public class JoinGamePage extends CancelablePage {
 
     private final FlowPane box;
 
-    public JoinGamePage(Application app, ConnectionHolder conn, Page previousPage) {
-        super(app, conn, TITLE, previousPage);
+    public JoinGamePage(Application app, Page previousPage) {
+        super(app, TITLE, previousPage);
         this.box = new FlowPane();
     }
 
@@ -54,7 +53,7 @@ public class JoinGamePage extends CancelablePage {
     public void onShow() {
         box.getChildren().setAll(new ProgressIndicator());
 
-        connection.async(
+        application.getConnection().async(
             c -> {
                 Future<GameListResponse> listF = c.sendGameList();
                 GameListResponse listR = listF.get(2000, TimeUnit.MILLISECONDS);
@@ -111,7 +110,7 @@ public class JoinGamePage extends CancelablePage {
 
     private void onJoinGame(Image image, int gameID) {
         application.setActivePage(new LoadingPage());
-        connection.async(
+        application.getConnection().async(
             c -> {
                 Future<JoinGameResponse> joinF = c.sendJoinGame(gameID);
                 JoinGameResponse joinR = joinF.get(2000, TimeUnit.MILLISECONDS);
@@ -129,7 +128,7 @@ public class JoinGamePage extends CancelablePage {
                     return;
                 }
 
-                application.setActivePage(new PuzzlePage(connection, image, stateR));
+                application.setActivePage(new PuzzlePage(application, gameID, stateR, image));
             },
             e -> {
                 Page page = new ErrorPage(application, this, e.toString());

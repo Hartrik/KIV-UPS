@@ -2,7 +2,6 @@ package cz.hartrik.puzzle.page;
 
 import cz.hartrik.common.Exceptions;
 import cz.hartrik.puzzle.Application;
-import cz.hartrik.puzzle.net.ConnectionHolder;
 import java.util.concurrent.TimeUnit;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
@@ -16,14 +15,14 @@ import javafx.scene.text.Text;
  * A page with a main menu.
  *
  * @author Patrik Harag
- * @version 2017-10-15
+ * @version 2017-10-17
  */
 public class MenuPage extends PageBase {
 
     private final Page previousPage;
 
-    public MenuPage(Application app, ConnectionHolder conn, Page previousPage) {
-        super(app, conn);
+    public MenuPage(Application app, Page previousPage) {
+        super(app);
         this.previousPage = previousPage;
     }
 
@@ -54,18 +53,18 @@ public class MenuPage extends PageBase {
     }
 
     private void onNewGame() {
-        Page page = new NewGamePage(application, connection, this);
+        Page page = new NewGamePage(application, this);
         application.setActivePage(page);
     }
 
     private void onJoinGame() {
-        Page page = new JoinGamePage(application, connection, this);
+        Page page = new JoinGamePage(application, this);
         application.setActivePage(page);
     }
 
     private void onLogOut() {
         application.setActivePage(new LoadingPage());
-        connection.async(
+        application.getConnection().async(
             c -> {
                 c.sendLogOut().get(2000, TimeUnit.MILLISECONDS);
                 logOut();
@@ -79,7 +78,7 @@ public class MenuPage extends PageBase {
 
     private void logOut() {
         application.setActivePage(previousPage);
-        Exceptions.silent(connection::close);
+        Exceptions.silent(application.getConnection()::close);
     }
 
 }
