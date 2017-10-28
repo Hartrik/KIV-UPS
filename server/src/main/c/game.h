@@ -12,6 +12,7 @@
 #define GAME_MIN_SIZE 2
 #define GAME_PIECE_SIZE 100
 #define GAME_SHUFFLE_MULTIPIER 1.5
+#define GAME_WH_RATIO 1.5
 
 typedef struct _Piece {
     int id;

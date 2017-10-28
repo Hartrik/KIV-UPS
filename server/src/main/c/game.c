@@ -31,16 +31,14 @@ void game_free(Game* game) {
 }
 
 void game_shuffle(Game* game, int max_w, int max_h) {
-    unsigned int last = (unsigned int) time(NULL);
+    unsigned int last;
 
     for (int i = 0; i < game->w * game->h; ++i) {
         Piece* p = game->pieces[i];
 
-        srand(last);
         last = (unsigned int) (rand() % (max_w * 2));
         p->x = last - max_w;
 
-        srand(last);
         last = (unsigned int) (rand() % (max_h * 2));
         p->y = last - max_h;
     }

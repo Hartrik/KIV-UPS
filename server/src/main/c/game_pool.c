@@ -31,8 +31,8 @@ Game *gp_create_game(GamePool *game_pool, unsigned int w, unsigned int h) {
     Game* game = (Game *) calloc(1, sizeof(Game));
     game_init(game, ++game_pool->last_id, w, h);
     game_shuffle(game,
-                 (int) (game->h * GAME_PIECE_SIZE * GAME_SHUFFLE_MULTIPIER / 2),
-                 (int) (game->w * GAME_PIECE_SIZE * GAME_SHUFFLE_MULTIPIER / 2));
+                 (int) (game->w * GAME_PIECE_SIZE * GAME_SHUFFLE_MULTIPIER * GAME_WH_RATIO / 2),
+                 (int) (game->h * GAME_PIECE_SIZE * GAME_SHUFFLE_MULTIPIER / GAME_WH_RATIO / 2));
 
     game_pool->games_size++;
     ensure_capacity(game_pool);
