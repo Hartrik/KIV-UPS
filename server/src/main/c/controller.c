@@ -166,7 +166,7 @@ void controller_process_message(Session *session, char *type, char *content) {
     } else if (strncmp(type, "GNW", 3) == 0) {
         long w, h;
 
-        if (!session_can_create_game(session)) {
+        if (!gp_can_create_game(&game_pool, session)) {
             controller_send_int(session, "GNW", PROTOCOL_GNW_NO_PERMISSIONS);
         } else if (parse_size(content, &w, &h)) {
             if (w >= GAME_MIN_SIZE && w <= GAME_MAX_SIZE
@@ -186,7 +186,7 @@ void controller_process_message(Session *session, char *type, char *content) {
         }
 
     } else if (strncmp(type, "GJO", 3) == 0) {
-        if (!session_can_join_game(session)) {
+        if (!gp_can_join_game(&game_pool, session)) {
             controller_send_int(session, "GJO", PROTOCOL_GJO_NO_PERMISSIONS);
         } else {
             long id;

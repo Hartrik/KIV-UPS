@@ -2,7 +2,7 @@
 /**
  *
  * @author: Patrik Harag
- * @version: 2017-10-26
+ * @version: 2017-10-28
  */
 
 #include <memory.h>
@@ -30,26 +30,4 @@ bool session_is_logged(Session* session) {
 
 bool session_is_in_game(Session* session) {
     return session_is_logged(session) && session->game != NULL;
-}
-
-bool session_can_create_game(Session *session) {
-    if (!session_is_logged(session))
-        return false;
-
-    if (session_is_in_game(session))
-        return false;
-
-    // TODO: limit number of games...
-
-    return true;
-}
-
-bool session_can_join_game(Session *session) {
-    if (!session_is_logged(session))
-        return false;
-
-    if (session_is_in_game(session))
-        return false;
-
-    return true;
 }

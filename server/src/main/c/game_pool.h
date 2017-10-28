@@ -2,7 +2,7 @@
 /**
  *
  * @author: Patrik Harag
- * @version: 2017-10-26
+ * @version: 2017-10-28
  */
 
 #ifndef SERVER_GAME_POOL_H
@@ -14,6 +14,7 @@
 
 #define GAME_POOL_DEFAULT_CAPACITY 8
 #define GAME_POOL_INCREASE_RATIO 2
+#define GAME_POOL_MAX_GAMES 8
 
 typedef struct _GamePool {
 
@@ -25,8 +26,10 @@ typedef struct _GamePool {
 } GamePool;
 
 void gp_init(GamePool* game_pool);
+bool gp_can_create_game(GamePool* game_pool, Session *session);
 Game *gp_create_game(GamePool *game_pool, unsigned int w, unsigned int h);
 Game *gp_find_game(GamePool *game_pool, int id);
+bool gp_can_join_game(GamePool* game_pool, Session *session);
 Game* gp_join_game(GamePool* game_pool, Session *session, int game_id);
 void gp_free(GamePool* game_pool);
 

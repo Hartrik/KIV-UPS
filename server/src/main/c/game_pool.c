@@ -2,7 +2,7 @@
 /**
  *
  * @author: Patrik Harag
- * @version: 2017-10-26
+ * @version: 2017-10-28
  */
 
 #include <stdlib.h>
@@ -27,6 +27,19 @@ void gp_init(GamePool* game_pool) {
     gp_free(game_pool);
 }
 
+bool gp_can_create_game(GamePool* game_pool, Session *session) {
+    if (!session_is_logged(session))
+        return false;
+
+    if (session_is_in_game(session))
+        return false;
+
+    if (game_pool->games_size == GAME_POOL_MAX_GAMES)
+        return false;
+
+    return true;
+}
+
 Game *gp_create_game(GamePool *game_pool, unsigned int w, unsigned int h) {
     Game* game = (Game *) calloc(1, sizeof(Game));
     game_init(game, ++game_pool->last_id, w, h);
@@ -47,6 +60,16 @@ Game *gp_find_game(GamePool *game_pool, int id) {
             return game;
     }
     return NULL;
+}
+
+bool gp_can_join_game(GamePool* game_pool, Session *session) {
+    if (!session_is_logged(session))
+        return false;
+
+    if (session_is_in_game(session))
+        return false;
+
+    return true;
 }
 
 Game* gp_join_game(GamePool* game_pool, Session *session, int game_id) {
