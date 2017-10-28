@@ -2,7 +2,7 @@
 /**
  *
  * @author: Patrik Harag
- * @version: 2017-10-17
+ * @version: 2017-10-28
  */
 
 #ifndef SERVER_SESSION_POOL_H
@@ -23,6 +23,7 @@ typedef struct _SessionPool {
 } SessionPool;
 
 void sp_init(SessionPool* session_pool);
+bool sp_is_free_name(SessionPool* session_pool, char* name);
 Session* sp_create(SessionPool *session_pool);
 void sp_free(SessionPool* session_pool);
 

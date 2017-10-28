@@ -17,7 +17,7 @@ import static org.hamcrest.CoreMatchers.*;
 
 /**
  * @author Patrik Harag
- * @version 2017-10-15
+ * @version 2017-10-28
  */
 public class ConnectionTest {
 
@@ -98,6 +98,19 @@ public class ConnectionTest {
         assertThat(response2.get(), is(LogInResponse.ALREADY_LOGGED));
 
         connection.close();
+    }
+
+    @Test(timeout = DEFAULT_TIMEOUT)
+    public void testLogInNameAlreadyInUse() throws Exception {
+        try (Connection c1 = ConnectionProvider.connect()) {
+            Future<LogInResponse> response1 = c1.sendLogIn("Test99");
+            assertThat(response1.get(), is(LogInResponse.OK));
+
+            try (Connection c2 = ConnectionProvider.connect()) {
+                Future<LogInResponse> response2 = c2.sendLogIn("Test99");
+                assertThat(response2.get(), is(LogInResponse.NAME_ALREADY_IN_USE));
+            }
+        }
     }
 
     // LOG OUT

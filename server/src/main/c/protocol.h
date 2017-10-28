@@ -2,7 +2,7 @@
 /**
  *
  * @author: Patrik Harag
- * @version: 2017-10-15
+ * @version: 2017-10-28
  */
 
 #ifndef SERVER_PROTOCOL_H
@@ -16,6 +16,7 @@
 #define PROTOCOL_LIN_NAME_TOO_SHORT 2
 #define PROTOCOL_LIN_NAME_TOO_LONG 3
 #define PROTOCOL_LIN_UNSUPPORTED_CHARS 4
+#define PROTOCOL_LIN_NAME_ALREADY_IN_USE 5
 
 #define PROTOCOL_LOF_OK 0
 #define PROTOCOL_LOF_IN_GAME 1

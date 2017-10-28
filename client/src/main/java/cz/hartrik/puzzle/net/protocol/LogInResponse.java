@@ -4,7 +4,7 @@ package cz.hartrik.puzzle.net.protocol;
  * Server response to the LIN request.
  *
  * @author Patrik Harag
- * @version 2017-10-12
+ * @version 2017-10-28
  */
 public enum LogInResponse {
 
@@ -13,6 +13,7 @@ public enum LogInResponse {
     NAME_TOO_SHORT,
     NAME_TOO_LONG,
     UNSUPPORTED_CHARS,
+    NAME_ALREADY_IN_USE,
 
     UNKNOWN;
 

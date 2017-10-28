@@ -97,8 +97,9 @@ void controller_process_message(Session *session, char *type, char *content) {
             controller_send_int(session, "LIN", PROTOCOL_LIN_NAME_TOO_LONG);
         } else if (!utils_is_valid_name(name)) {
             controller_send_int(session, "LIN", PROTOCOL_LIN_UNSUPPORTED_CHARS);
+        } else if (!sp_is_free_name(&session_pool, name)) {
+            controller_send_int(session, "LIN", PROTOCOL_LIN_NAME_ALREADY_IN_USE);
         } else {
-            // TODO: uživatelé se stejnými jmény
             strcpy(session->name, name);
             controller_send_int(session, "LIN", PROTOCOL_LIN_OK);
             printf("  [%d] - User logged in: %s\n", session->id, session->name);

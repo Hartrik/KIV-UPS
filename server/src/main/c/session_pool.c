@@ -2,9 +2,10 @@
 /**
  *
  * @author: Patrik Harag
- * @version: 2017-10-26
+ * @version: 2017-10-28
  */
 
+#include <string.h>
 #include "session_pool.h"
 
 static void ensure_capacity(SessionPool* session_pool) {
@@ -23,6 +24,18 @@ static void ensure_capacity(SessionPool* session_pool) {
 
 void sp_init(SessionPool* session_pool) {
     sp_free(session_pool);
+}
+
+bool sp_is_free_name(SessionPool* session_pool, char* name) {
+    for (int i = 0; i < session_pool->sessions_size; ++i) {
+        Session* session = session_pool->sessions[i];
+        if (session->status == SESSION_STATUS_CONNECTED) {
+            if (strcmp(session->name, name) == 0) {
+                return false;
+            }
+        }
+    }
+    return true;
 }
 
 Session* sp_create(SessionPool* session_pool) {
