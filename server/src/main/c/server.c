@@ -3,7 +3,7 @@
  * Socket server, handles multiple clients using threads.
  *
  * @author: Patrik Harag
- * @version: 2017-10-26
+ * @version: 2017-10-28
  */
 
 #include <stdbool.h>
@@ -203,6 +203,12 @@ static void process_session(Session* session, char socket_buffer[SERVER_SOCKET_B
     if (recv_size > 0) {
         stats_add_bytes_received(recv_size);
         session->last_activity = utils_current_millis();
+
+        if (message_buffer->index + recv_size > SERVER_MAX_MESSAGE_SIZE) {
+            printf("  [%d] Message too long\n", session->id);
+            session->status = SESSION_STATUS_SHOULD_DISCONNECT;
+            return;
+        }
 
         for (int i = 0; i < recv_size; ++i) {
             char c = socket_buffer[i];
