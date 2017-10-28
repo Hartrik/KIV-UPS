@@ -115,18 +115,29 @@ static void controller_process_GLI(Session *session, char *content) {
     if (session_is_logged(session)) {
 
         size_t count = game_pool.games_size;
-        char str[3 * count * 1  // separators
-                 + 3 * count * 11  // digits
-                 + 1];  // \0
-        str[0] = '\0';
 
-        int last = 0;
+        Buffer buffer;
+        buffer_init(&buffer, 3 * (count /*separators*/ + count * 4 /*digits*/));
+
         for (int i = 0; i < count; ++i) {
             Game* game = game_pool.games[i];
-            last += sprintf(str + last, "%d,%d,%d;", game->id, game->w, game->h);
+            char temp[12];
+
+            sprintf(temp, "%d", game->id);
+            buffer_add_string(&buffer, temp);
+            buffer_add(&buffer, ',');
+            sprintf(temp, "%d", game->w);
+            buffer_add_string(&buffer, temp);
+            buffer_add(&buffer, ',');
+            sprintf(temp, "%d", game->h);
+            buffer_add_string(&buffer, temp);
+            buffer_add(&buffer, ';');
         }
 
-        controller_send(session, "GLI", str);
+        buffer_add(&buffer, '\0');
+        controller_send(session, "GLI", buffer.content);
+
+        buffer_free(&buffer);
 
     } else {
         controller_send(session, "GLI", "");
@@ -205,26 +216,32 @@ static void controller_process_GJO(Session *session, char *content) {
 }
 
 static void controller_process_GST(Session *session, char *content) {
-    // TODO
-
     long id;
 
     if (session_is_logged(session) && parse_number(content, &id)) {
-
         Game* game = gp_find_game(&game_pool, (int) id);
         if (game != NULL) {
-            int pieces = game->h * game->w;
-            char str[2 * pieces * 1  // separators
-                     + 2 * pieces * 11  // digits
-                     + 1];  // \0
+            size_t pieces = game->h * game->w;
 
-            int last = 0;
+            Buffer buffer;
+            buffer_init(&buffer, 2 * (pieces /*separators*/ + pieces * 4 /*digits*/));
+
             for (int i = 0; i < pieces; ++i) {
                 Piece* p = game->pieces[i];
-                last += sprintf(str + last, "%d,%d;", p->x, p->y);
+                char temp[12];
+
+                sprintf(temp, "%d", p->x);
+                buffer_add_string(&buffer, temp);
+                buffer_add(&buffer, ',');
+                sprintf(temp, "%d", p->y);
+                buffer_add_string(&buffer, temp);
+                buffer_add(&buffer, ';');
             }
 
-            controller_send(session, "GST", str);
+            buffer_add(&buffer, '\0');
+            controller_send(session, "GST", buffer.content);
+
+            buffer_free(&buffer);
 
         } else {
             controller_send(session, "GST", "error");
@@ -233,6 +250,10 @@ static void controller_process_GST(Session *session, char *content) {
     } else {
         controller_send(session, "GST", "error");
     }
+}
+
+static void controller_process_GUP(Session *session, char *content) {
+    // TODO
 }
 
 static void controller_process_(Session *session, char *content) {
@@ -272,6 +293,9 @@ void controller_process_message(Session *session, char *type, char *content) {
 
     } else if (strncmp(type, "GST", 3) == 0) {
         controller_process_GST(session, content);
+
+    } else if (strncmp(type, "GUP", 3) == 0) {
+        controller_process_GUP(session, content);
 
     } else {
         session->corrupted_messages++;
