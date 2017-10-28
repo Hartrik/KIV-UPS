@@ -1,10 +1,7 @@
 package cz.hartrik.puzzle.net;
 
 import cz.hartrik.common.Exceptions;
-import cz.hartrik.puzzle.net.protocol.JoinGameResponse;
-import cz.hartrik.puzzle.net.protocol.LogInResponse;
-import cz.hartrik.puzzle.net.protocol.LogOutResponse;
-import cz.hartrik.puzzle.net.protocol.NewGameResponse;
+import cz.hartrik.puzzle.net.protocol.*;
 import java.util.Arrays;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -171,12 +168,12 @@ public class ConnectionTest {
                     "1000000,20",
                     "1,10",
                     "10",
-                    "10,10g"
+                    "test"
             );
 
             for (String message : messages) {
                 Future<String> game = connection.sendMessageAndHook("GNW", message);
-                assertThat(game.get().matches("-[12]"), is(true));
+                assertThat(message, game.get().matches("-[12]"), is(true));
             }
         }
     }
@@ -215,6 +212,26 @@ public class ConnectionTest {
 
             Future<Set<String>> players = connection.sendPlayerList(game.get().getGameID());
             assertThat(players.get(), is(new LinkedHashSet<>(Arrays.asList("Nick"))));
+        }
+    }
+
+    // MOVE
+
+    @Test(timeout = DEFAULT_TIMEOUT)
+    public void testMove() throws Exception {
+        try (Connection connection = ConnectionProvider.connect()) {
+            Future<LogInResponse> response = connection.sendLogIn("Nick");
+            assertThat(response.get(), is(LogInResponse.OK));
+
+            Future<NewGameResponse> game = connection.sendNewGame(10, 5);
+            assertThat(game.get().getStatus(), is(NewGameResponse.Status.OK));
+            assertThat(game.get().getGameID() >= 0, is(true));
+
+            Future<JoinGameResponse> join = connection.sendJoinGame(game.get().getGameID());
+            assertThat(join.get(), is(JoinGameResponse.OK));
+
+            Future<GenericResponse> move = connection.sendGameAction(0, 45, 95);
+            assertThat(move.get(), is(GenericResponse.OK));
         }
     }
 

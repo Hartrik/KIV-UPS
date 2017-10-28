@@ -33,33 +33,6 @@ void controller_update(Session *session, unsigned long long time) {
     check_timeout(session, time);
 }
 
-static bool parse_size(char* string, long* w, long* h) {
-    if (string == NULL)
-        return false;
-
-    char* sep_str = strchr(string, ',');
-    if (sep_str == NULL)
-        return false;
-
-    int sep_index = (int) (sep_str - string);
-    if (sep_index >= strlen(string))
-        return false;  // xxx,
-    string[sep_index] = '\0';
-
-    char *rest;
-    *w = strtol(string, &rest, 10);
-
-    if (strlen(rest) != 0)
-        return false;
-
-    *h = strtol(string + sep_index + 1, &rest, 10);
-
-    if (strlen(rest) != 0)
-        return false;
-
-    return true;
-}
-
 static bool parse_number(char* string, long* i) {
     if (string == NULL)
         return false;
@@ -174,18 +147,19 @@ static void controller_process_GPL(Session *session, char *content) {
 }
 
 static void controller_process_GNW(Session *session, char *content) {
-    long w, h;
+    unsigned int w = 0;
+    unsigned int h = 0;
 
     if (!gp_can_create_game(&game_pool, session)) {
         controller_send_int(session, "GNW", PROTOCOL_GNW_NO_PERMISSIONS);
-    } else if (parse_size(content, &w, &h)) {
+    } else if (content != NULL && sscanf(content, "%u,%u;", &w, &h)) {
         if (w >= GAME_MIN_SIZE && w <= GAME_MAX_SIZE
             && h >= GAME_MIN_SIZE && h <= GAME_MAX_SIZE) {
 
-            Game* game = gp_create_game(&game_pool, (unsigned int) w, (unsigned int) h);
+            Game* game = gp_create_game(&game_pool, w, h);
 
             controller_send_int(session, "GNW", game->id);
-            printf("  [%d] - New game [id=%d, w=%ld, h=%ld]\n",
+            printf("  [%d] - New game [id=%u, w=%u, h=%u]\n",
                    session->id, game->id, w, h);
 
         } else {
@@ -252,8 +226,26 @@ static void controller_process_GST(Session *session, char *content) {
     }
 }
 
-static void controller_process_GUP(Session *session, char *content) {
-    // TODO
+static void controller_process_GAC(Session *session, char *content) {
+    int id = 0;
+    int y, x = 0;
+
+    if (!session_is_in_game(session)) {
+        controller_send_int(session, "GAC", PROTOCOL_GAC_NO_PERMISSIONS);
+    } else if (content != NULL && sscanf(content, "%d,%d,%d;", &id, &x, &y)) {
+        Game* game = session->game;
+        if (id < 0 || id >= game->w * game->h) {
+            controller_send_int(session, "GAC", PROTOCOL_GAC_WRONG_PIECE);
+        } else {
+            game->pieces[id]->x = x;
+            game->pieces[id]->y = y;
+            controller_send_int(session, "GAC", PROTOCOL_GAC_OK);
+            printf("  [%d] - Move %d -> %d, %d\n", session->id, id, x, y);
+        }
+
+    } else {
+        controller_send_int(session, "GAC", PROTOCOL_GAC_WRONG_FORMAT);
+    }
 }
 
 static void controller_process_(Session *session, char *content) {
@@ -294,8 +286,8 @@ void controller_process_message(Session *session, char *type, char *content) {
     } else if (strncmp(type, "GST", 3) == 0) {
         controller_process_GST(session, content);
 
-    } else if (strncmp(type, "GUP", 3) == 0) {
-        controller_process_GUP(session, content);
+    } else if (strncmp(type, "GAC", 3) == 0) {
+        controller_process_GAC(session, content);
 
     } else {
         session->corrupted_messages++;
