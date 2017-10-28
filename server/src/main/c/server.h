@@ -15,6 +15,7 @@
 #define SERVER_CONNECTION_QUEUE 10  /* how many pending connections will be held */
 #define SERVER_TIMEOUT 2000  /* ms */
 #define SERVER_CYCLE 20  /* ms */
+#define SERVER_CYCLE_LONG 100  /* ms */
 #define SERVER_MAX_CORRUPTED_MESSAGES 50  /* per session */
 #define SERVER_MAX_MESSAGE_SIZE 1024
 

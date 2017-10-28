@@ -155,6 +155,8 @@ void* game_thread_handler(void *arg) {
         unsigned long long cycle = cycle_end - cycle_start;
         if (cycle < SERVER_CYCLE) {
             utils_sleep(SERVER_CYCLE - cycle);
+        } else if (cycle > SERVER_CYCLE_LONG) {
+            printf("  Long cycle: %llu ms\n", cycle);
         }
 
         pthread_mutex_unlock(&shared_lock);
