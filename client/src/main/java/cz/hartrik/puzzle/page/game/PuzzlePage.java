@@ -9,12 +9,12 @@ import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import javafx.application.Platform;
+import javafx.scene.Group;
 import javafx.scene.Node;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.image.Image;
 import javafx.scene.layout.HBox;
-import javafx.scene.layout.Pane;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 import javafx.scene.text.Font;
@@ -31,7 +31,7 @@ public class PuzzlePage implements Page {
     private final Image image;
 
     private List<Piece> pieces;
-    private Pane desk;
+    private Group desk;
 
     public PuzzlePage(Application application, int gameID,
                       GameStateResponse initial, Image image) {
@@ -42,10 +42,10 @@ public class PuzzlePage implements Page {
         this.desk = createDesk(initial);
     }
 
-    private Pane createDesk(GameStateResponse initialState) {
+    private Group createDesk(GameStateResponse initialState) {
         int numOfColumns = (int) (image.getWidth() / Piece.SIZE);
         int numOfRows = (int) (image.getHeight() / Piece.SIZE);
-        Pane desk = new Pane();
+        Group group = new Group();
 
         this.pieces = new ArrayList<>();
         for (int col = 0; col < numOfColumns; col++) {
@@ -60,17 +60,18 @@ public class PuzzlePage implements Page {
                 piece.moveY(p.getY());
 
                 pieces.add(piece);
-                desk.getChildren().add(piece.getNode());
+                group.getChildren().add(piece.getNode());
             }
         }
-        return desk;
+
+        return group;
     }
 
     private VBox createRightPanel() {
         VBox rightPanel = new VBox();
         rightPanel.getStyleClass().add("right-panel");
         rightPanel.setMinWidth(150);
-        HBox.setHgrow(rightPanel, Priority.NEVER);
+        rightPanel.setMaxWidth(150);
 
         Label players = new Label("Players");
         players.getStyleClass().add("title");
@@ -105,16 +106,12 @@ public class PuzzlePage implements Page {
     @Override
     public Node getNode() {
         ScrollPane scrollPane = new ScrollPane();
-
-        // centerování
-        scrollPane.viewportBoundsProperty().addListener((observable, oldValue, newValue) -> {
-            desk.setTranslateX(newValue.getWidth() / 2);
-            desk.setTranslateY(newValue.getHeight() / 2);
-        });
-
         scrollPane.setContent(desk);
 
-        return new HBox(scrollPane, createRightPanel());
+        VBox rightPanel = createRightPanel();
+        HBox.setHgrow(rightPanel, Priority.NEVER);
+        HBox.setHgrow(scrollPane, Priority.ALWAYS);
+        return new HBox(scrollPane, rightPanel);
     }
 
 }
