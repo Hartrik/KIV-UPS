@@ -1,6 +1,5 @@
 package cz.hartrik.puzzle.net;
 
-import cz.hartrik.common.Exceptions;
 import cz.hartrik.puzzle.net.protocol.*;
 import java.util.*;
 import java.util.concurrent.Future;
@@ -16,37 +15,6 @@ import static org.hamcrest.CoreMatchers.*;
 public class ConnectionTest {
 
     private static final int DEFAULT_TIMEOUT = 1000;
-
-    // GENERAL
-
-    @Test(expected = Exception.class)
-    public void testNoActivity() throws Exception {
-        Connection connection = ConnectionProvider.connect();
-
-        Thread.sleep(5_000);
-        // server must recognize /dead/ client
-
-        connection.sendPing();
-        connection.close();
-    }
-
-    @Test
-    public void testNotClosed() throws Exception {
-        ConnectionProvider.connect();
-        // server must recognize /dead/ client
-    }
-
-    @Test
-    public void testLongConnection() throws Exception {
-        try (Connection connection = ConnectionProvider.connect()) {
-
-            connection.addConsumer("PIN", MessageConsumer.persistant(s -> {
-                Exceptions.silent(connection::sendPing);
-            }));
-
-            Thread.sleep(5_000);
-        }
-    }
 
     // LOG IN
 

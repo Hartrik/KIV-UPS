@@ -1,5 +1,6 @@
 package cz.hartrik.puzzle.net;
 
+import cz.hartrik.common.Exceptions;
 import java.util.Arrays;
 import java.util.Random;
 import org.junit.Test;
@@ -9,11 +10,40 @@ import static org.junit.Assert.assertThat;
 
 /**
  * @author Patrik Harag
- * @version 2017-10-28
+ * @version 2017-10-29
  */
 public class ServerStabilityTest {
 
     private static final Random RANDOM = new Random(65962052);
+
+    @Test(expected = Exception.class)
+    public void testNoActivity() throws Exception {
+        Connection connection = ConnectionProvider.connect();
+
+        Thread.sleep(6_000);
+        // server must recognize /dead/ client
+
+        connection.sendPing();
+        connection.close();
+    }
+
+    @Test
+    public void testNotClosed() throws Exception {
+        ConnectionProvider.connect();
+        // server must recognize /dead/ client
+    }
+
+    @Test
+    public void testLongConnection() throws Exception {
+        try (Connection connection = ConnectionProvider.connect()) {
+
+            connection.addConsumer("PIN", MessageConsumer.persistant(s -> {
+                Exceptions.silent(connection::sendPing);
+            }));
+
+            Thread.sleep(6_000);
+        }
+    }
 
     @Test
     public void testLongMessage() throws Exception {
