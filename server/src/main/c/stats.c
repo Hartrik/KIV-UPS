@@ -62,9 +62,9 @@ void stats_store() {
 
     stats.end = utils_current_millis();
 
-    FILE *f = fopen("stats.txt", "w");
+    FILE *f = fopen(STATS_FILE, "w");
     if (f == NULL) {
-        perror("Error while creating stats.txt");
+        perror("Error while creating stats file");
         return;
 
     } else {
@@ -84,6 +84,8 @@ void stats_store() {
         fprintf(f, "connections_established: %d\n", stats.connections_established);
 
         fclose(f);
+
+        printf("Created '%s'\n", STATS_FILE);
     }
 
     pthread_mutex_unlock(&stats_lock);

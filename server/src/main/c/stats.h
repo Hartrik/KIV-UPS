@@ -8,6 +8,8 @@
 #ifndef SERVER_STATS_H
 #define SERVER_STATS_H
 
+#define STATS_FILE "stats.txt"
+
 typedef struct _Stats {
     unsigned long long start;
     unsigned long long end;

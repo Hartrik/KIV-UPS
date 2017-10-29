@@ -3,7 +3,7 @@
  * Socket server, handles multiple clients using threads.
  *
  * @author: Patrik Harag
- * @version: 2017-10-28
+ * @version: 2017-10-29
  */
 
 #include <stdbool.h>
@@ -18,7 +18,6 @@
 
 #include "server.h"
 #include "utils.h"
-#include "session.h"
 #include "protocol.h"
 #include "controller.h"
 #include "stats.h"
@@ -102,7 +101,9 @@ int server_start(int port) {
             if (!set_non_blocking(client_fd))
                 return 1;
 
+            pthread_mutex_lock(&shared_lock);
             shared_create_session(client_fd);
+            pthread_mutex_unlock(&shared_lock);
         } else {
             utils_sleep(50);
         }
@@ -179,11 +180,13 @@ static void process_session(Session* session, char socket_buffer[SERVER_SOCKET_B
 
     // write
     if (session->to_send.index > 0) {
-        ssize_t written = write(socket_fd, session->to_send.content, session->to_send.index);
+        ssize_t written = write(socket_fd, session->to_send.content,
+                                session->to_send.index);
         if (written > 0) {
             stats_add_bytes_sent(written);
 
-            printf("  [%d] << %d B\n", session->id, (int) session->to_send.index);
+            printf("  [%d] << %d B\n", session->id,
+                   (int) session->to_send.index);
             fflush(stdout);
 
             if (session->to_send.index == written) {
@@ -204,10 +207,10 @@ static void process_session(Session* session, char socket_buffer[SERVER_SOCKET_B
     }
 
     // read
-    ssize_t recv_size = recv(socket_fd, socket_buffer, SERVER_SOCKET_BUFFER_SIZE, 0);
+    ssize_t recv_size = recv(socket_fd, socket_buffer,
+                             SERVER_SOCKET_BUFFER_SIZE, 0);
     if (recv_size > 0) {
         stats_add_bytes_received(recv_size);
-        session->last_activity = utils_current_millis();
 
         if (message_buffer->index + recv_size > SERVER_MAX_MESSAGE_SIZE) {
             printf("  [%d] Message too long\n", session->id);
@@ -215,30 +218,7 @@ static void process_session(Session* session, char socket_buffer[SERVER_SOCKET_B
             return;
         }
 
-        for (int i = 0; i < recv_size; ++i) {
-            char c = socket_buffer[i];
-            if (c == PROTOCOL_MESSAGE_SEP) {
-                // end of message
-                if (message_buffer->index != 0) {
-                    buffer_add(message_buffer, 0);
-
-                    char *type = message_buffer_get_type(message_buffer);
-                    char *content = message_buffer_get_content(message_buffer);
-
-                    controller_process_message(session, type, content);
-
-                    // reset buffer
-                    buffer_reset(message_buffer);
-                }
-            } else {
-                if (message_buffer->index == PROTOCOL_TYPE_SIZE) {
-                    // split message type and its content
-                    buffer_add(message_buffer, 0);
-                }
-
-                buffer_add(message_buffer, socket_buffer[i]);
-            }
-        }
+        server_read(session, socket_buffer, recv_size, message_buffer);
 
     } else if (recv_size == -1) {
         // end of stream or timeout
@@ -266,3 +246,33 @@ static void process_session(Session* session, char socket_buffer[SERVER_SOCKET_B
         session->status = SESSION_STATUS_SHOULD_DISCONNECT;
     }
 }
+
+void server_read(Session* session, char* input, long input_size, Buffer* message_buffer) {
+    session->last_activity = utils_current_millis();
+
+    for (int i = 0; i < input_size; ++i) {
+        char c = input[i];
+        if (c == PROTOCOL_MESSAGE_SEP) {
+            // end of message
+            if (message_buffer->index != 0) {
+                buffer_add(message_buffer, 0);
+
+                char *type = message_buffer_get_type(message_buffer);
+                char *content = message_buffer_get_content(message_buffer);
+
+                controller_process_message(session, type, content);
+
+                // reset buffer
+                buffer_reset(message_buffer);
+            }
+        } else {
+            if (message_buffer->index == PROTOCOL_TYPE_SIZE) {
+                // split message type and its content
+                buffer_add(message_buffer, 0);
+            }
+
+            buffer_add(message_buffer, input[i]);
+        }
+    }
+}
+

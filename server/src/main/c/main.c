@@ -2,7 +2,7 @@
 /**
  *
  * @author: Patrik Harag
- * @version: 2017-10-16
+ * @version: 2017-10-29
  */
 
 #include <stdio.h>
@@ -10,7 +10,6 @@
 #include <string.h>
 #include "server.h"
 #include "shared.h"
-#include "utils.h"
 #include "stats.h"
 
 #define PORT 8076
@@ -37,9 +36,11 @@ int main() {
     stats_init();
 
     shared_init();
+    shared_load();
 
     int ret = server_start(PORT);
 
+    shared_store();
     shared_free();
 
     stats_store();

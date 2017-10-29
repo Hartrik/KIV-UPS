@@ -2,7 +2,7 @@
 /**
  *
  * @author: Patrik Harag
- * @version: 2017-10-28
+ * @version: 2017-10-29
  */
 
 #ifndef SERVER_PROTOCOL_H
@@ -33,5 +33,7 @@
 #define PROTOCOL_GAC_NO_PERMISSIONS 1
 #define PROTOCOL_GAC_WRONG_FORMAT 2
 #define PROTOCOL_GAC_WRONG_PIECE 3
+
+#define PROTOCOL_GOF_OK 0
 
 #endif

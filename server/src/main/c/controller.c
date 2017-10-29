@@ -274,6 +274,11 @@ static void controller_process_GAC(Session *session, char *content) {
     controller_send_int(session, "GAC", PROTOCOL_GAC_OK);
 }
 
+static void controller_process_GOF(Session *session, char *content) {
+    session->game = NULL;
+    controller_send_int(session, "GOF", PROTOCOL_GOF_OK);
+}
+
 static void controller_process_(Session *session, char *content) {
     // TODO
 }
@@ -314,6 +319,9 @@ void controller_process_message(Session *session, char *type, char *content) {
 
     } else if (strncmp(type, "GAC", 3) == 0) {
         controller_process_GAC(session, content);
+
+    } else if (strncmp(type, "GOF", 3) == 0) {
+        controller_process_GOF(session, content);
 
     } else {
         session->corrupted_messages++;
