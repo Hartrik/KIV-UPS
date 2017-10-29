@@ -71,11 +71,10 @@ public class Piece {
         this.lastSyncY = lastSyncY;
     }
 
-    public Integer getLastSyncX() {
-        return lastSyncX;
-    }
+    public boolean changed() {
+        if (lastSyncX == null || lastSyncY == null)
+            return true;
 
-    public Integer getLastSyncY() {
-        return lastSyncY;
+        return !lastSyncX.equals(getX()) || !lastSyncY.equals(getY());
     }
 }

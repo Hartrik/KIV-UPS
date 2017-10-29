@@ -62,7 +62,7 @@ public class PuzzlePage implements Page {
                 piece.setLastSyncX(p.getX());
                 piece.setLastSyncY(p.getY());
 
-                initListener(piece);
+                initPieceMovedListener(piece);
 
                 pieces.add(piece);
                 group.getChildren().add(piece.getNode());
@@ -72,18 +72,24 @@ public class PuzzlePage implements Page {
         return group;
     }
 
-    private void initListener(Piece piece) {
+    private void initPieceMovedListener(Piece piece) {
         piece.getNode().setOnMouseReleased(event -> {
+            if (!piece.changed())
+                return;  // piece is on the same position
+
+            int x = piece.getX();
+            int y = piece.getY();
+
+            piece.setLastSyncX(x);
+            piece.setLastSyncY(y);
+
             application.getConnection().async(
                     c -> {
-                        GenericResponse res = c.sendGameAction(piece.getId(), piece.getX(), piece.getY())
+                        GenericResponse res = c.sendGameAction(piece.getId(), x, y)
                                 .get(2000, TimeUnit.MILLISECONDS);
 
                         if (res != GenericResponse.OK) {
                             throw new RuntimeException(res.toString());
-                        } else {
-                            piece.setLastSyncX(piece.getX());
-                            piece.setLastSyncY(piece.getY());
                         }
                     },
                     e -> {
