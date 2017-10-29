@@ -19,6 +19,14 @@ public class GameStateResponse {
         int id;
         int x, y;
 
+        public Piece(int id, int x, int y) {
+            this.id = id;
+            this.x = x;
+            this.y = y;
+        }
+
+        private Piece() {}
+
         public int getId() {
             return id;
         }

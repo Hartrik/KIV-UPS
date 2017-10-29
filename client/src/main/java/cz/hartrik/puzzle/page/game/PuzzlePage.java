@@ -83,20 +83,22 @@ public class PuzzlePage implements Page {
 
     private void initPieceMoveCompleteListener(Piece piece, PieceMoveFinalizer moveFinalizer) {
         piece.getNode().setOnMouseReleased(event -> {
-            moveFinalizer.moveComplete(piece);
+            Set<Piece> group = moveFinalizer.moveComplete(piece);
+            List<GameStateResponse.Piece> changed = group.stream()
+                    .filter(Piece::changed)
+                    .peek(p -> {
+                        p.setLastSyncX(p.getX());
+                        p.setLastSyncY(p.getY());
+                    })
+                    .map(p -> new GameStateResponse.Piece(p.getId(), p.getX(), p.getY()))
+                    .collect(Collectors.toList());
 
-            if (!piece.changed())
-                return;  // piece is on the same position
-
-            int x = piece.getX();
-            int y = piece.getY();
-
-            piece.setLastSyncX(x);
-            piece.setLastSyncY(y);
+            if (changed.isEmpty())
+                return;
 
             application.getConnection().async(
                     c -> {
-                        GenericResponse res = c.sendGameAction(piece.getId(), x, y)
+                        GenericResponse res = c.sendGameAction(changed)
                                 .get(2000, TimeUnit.MILLISECONDS);
 
                         if (res != GenericResponse.OK) {

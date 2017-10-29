@@ -1,6 +1,7 @@
 package cz.hartrik.puzzle.page.game;
 
 import java.util.IntSummaryStatistics;
+import java.util.Set;
 
 /**
  * Finalize move of a piece in the target destination.
@@ -10,15 +11,26 @@ import java.util.IntSummaryStatistics;
  */
 public class PieceMoveFinalizer {
 
-    private static final int MAX_DIFF = Piece.SIZE * 5;  // pt
-    private static final int MAX_PIECE_SNAP_DISTANCE = Piece.SIZE / 5;  // pt
+    static final int MAX_DIFF = Piece.SIZE * 5;  // pt
+    static final int MAX_PIECE_SNAP_DISTANCE = Piece.SIZE / 5;  // pt
 
     private final Desk desk;
+    private final PieceGroupManager groupManager;
 
     public PieceMoveFinalizer(Desk desk) {
         this.desk = desk;
+        this.groupManager = new PieceGroupManager(desk);
     }
 
+    public PieceGroupManager getGroupManager() {
+        return groupManager;
+    }
+
+    /**
+     * Correction after move.
+     *
+     * @param piece moved piece
+     */
     public void move(Piece piece) {
         int x = piece.getX();
         int y = piece.getY();
@@ -42,35 +54,55 @@ public class PieceMoveFinalizer {
         }
     }
 
-    public void moveComplete(Piece piece) {
-        // snap to a next piece
+    /**
+     * Correction after move complete / after drag and drop.
+     *
+     * @param piece moved piece
+     * @return group
+     */
+    public Set<Piece> moveComplete(Piece piece) {
+        // snap to a near piece (piece group)
 
+        Piece nearestPieceOrigin = null;
         double nearestDistance = Double.MAX_VALUE;
         Piece nearestPiece = null;
         Position nearestPosition = null;
 
-        for (Position position : Position.values()) {
-            Piece next = desk.getNext(piece, position);
-            if (next == null) continue;
+        Set<Piece> group = groupManager.getAllConnected(piece);
+        for (Piece p : group) {
 
-            double distance = distance(piece, next, position);
-            if (distance < nearestDistance) {
-                nearestPosition = position;
-                nearestDistance = distance;
-                nearestPiece = next;
+            for (Position position : Position.values()) {
+                Piece next = desk.getNext(p, position);
+                if (next == null) continue;
+
+                double distance = groupManager.distance(p, next, position);
+                if (distance < nearestDistance
+                        // not in the same group
+                        && distance > PieceGroupManager.MAX_PIECE_GROUP_DISTANCE) {
+
+                    nearestPieceOrigin = p;
+                    nearestPosition = position;
+                    nearestDistance = distance;
+                    nearestPiece = next;
+                }
             }
         }
 
         if (nearestDistance <= MAX_PIECE_SNAP_DISTANCE) {
-            piece.moveX(nearestPiece.getX() + (-1 * nearestPosition.getDX() * Piece.SIZE));
-            piece.moveY(nearestPiece.getY() + (-1 * nearestPosition.getDY() * Piece.SIZE));
-        }
-    }
+            int oldX = nearestPieceOrigin.getX();
+            int oldY = nearestPieceOrigin.getY();
+            int newX = nearestPiece.getX() + (-1 * nearestPosition.getDX() * Piece.SIZE);
+            int newY = nearestPiece.getY() + (-1 * nearestPosition.getDY() * Piece.SIZE);
 
-    private double distance(Piece piece, Piece other, Position position) {
-        int dx = piece.getX() - (other.getX() + (-1 * position.getDX() * Piece.SIZE));
-        int dy = piece.getY() - (other.getY() + (-1 * position.getDY() * Piece.SIZE));
-        return Math.sqrt((dx * dx) + (dy * dy));
+            int diffX = newX - oldX;
+            int diffY = newY - oldY;
+
+            for (Piece p : group) {
+                p.moveX(p.getX() + diffX);
+                p.moveY(p.getY() + diffY);
+            }
+        }
+        return group;
     }
 
 }

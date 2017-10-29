@@ -1,5 +1,6 @@
 package cz.hartrik.puzzle.page.game;
 
+import java.util.Set;
 import javafx.geometry.Point2D;
 import javafx.scene.Parent;
 import javafx.scene.image.Image;
@@ -17,7 +18,6 @@ import javafx.scene.shape.Shape;
  */
 public class PieceNode extends Parent {
 
-    private final Piece piece;
     private final double xInImage;
     private final double yInImage;
     private double startDragX;
@@ -27,7 +27,6 @@ public class PieceNode extends Parent {
     public PieceNode(Piece piece, Image image, double xInImage, double yInImage,
                      PieceMoveFinalizer moveFinalizer) {
 
-        this.piece = piece;
         this.xInImage = xInImage;
         this.yInImage = yInImage;
 
@@ -60,15 +59,22 @@ public class PieceNode extends Parent {
         setOnMouseDragged((MouseEvent me) -> {
             if (dragAnchor == null) return;
 
-            double newTranslateX = startDragX
-                    + me.getSceneX() - dragAnchor.getX();
-            double newTranslateY = startDragY
-                    + me.getSceneY() - dragAnchor.getY();
+            double newTranslateX = startDragX + me.getSceneX() - dragAnchor.getX();
+            double newTranslateY = startDragY + me.getSceneY() - dragAnchor.getY();
+            double oldTranslateX = getTranslateX();
+            double oldTranslateY = getTranslateY();
 
-            setTranslateX((int) newTranslateX);  // rounded to integer
-            setTranslateY((int) newTranslateY);
+            double diffX = newTranslateX - oldTranslateX;
+            double diffY = newTranslateY - oldTranslateY;
 
-            moveFinalizer.move(piece);
+            Set<Piece> group = moveFinalizer.getGroupManager().getAllConnected(piece);
+            for (Piece p : group) {
+                PieceNode node = p.getNode();
+                node.toFront();
+                node.setTranslateX((int) (node.getTranslateX() + diffX));
+                node.setTranslateY((int) (node.getTranslateY() + diffY));
+                moveFinalizer.move(p);
+            }
         });
     }
 

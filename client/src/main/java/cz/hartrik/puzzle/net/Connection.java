@@ -6,6 +6,7 @@ import java.io.*;
 import java.net.Socket;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
+import java.util.List;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
@@ -14,7 +15,7 @@ import java.util.stream.Stream;
 
 /**
  * @author Patrik Harag
- * @version 2017-10-17
+ * @version 2017-10-29
  */
 public class Connection implements AutoCloseable {
 
@@ -190,7 +191,7 @@ public class Connection implements AutoCloseable {
         return future;
     }
 
-    public Future<GenericResponse> sendGameAction(int id, int x, int y) throws Exception {
+    public Future<GenericResponse> sendGameAction(List<GameStateResponse.Piece> pieces) throws Exception {
         connect();
 
         CompletableFuture<GenericResponse> future = new CompletableFuture<>();
@@ -198,7 +199,13 @@ public class Connection implements AutoCloseable {
             future.complete(GenericResponse.parse(response));
         }));
 
-        sendMessage("GAC", id + "," + x + "," + y);
+        StringBuilder sb = new StringBuilder();
+        for (GameStateResponse.Piece piece : pieces) {
+            sb.append(piece.getId()).append(',')
+                    .append(piece.getX()).append(',')
+                    .append(piece.getY()).append(';');
+        }
+        sendMessage("GAC", sb.toString());
 
         return future;
     }

@@ -227,27 +227,51 @@ static void controller_process_GST(Session *session, char *content) {
 
 static void controller_process_GAC(Session *session, char *content) {
     int id = 0;
-    int y, x = 0;
+    int y = 0, x = 0;
 
     if (!session_is_in_game(session)) {
         controller_send_int(session, "GAC", PROTOCOL_GAC_NO_PERMISSIONS);
-    } else if (content != NULL && sscanf(content, "%d,%d,%d;", &id, &x, &y)) {
-        Game* game = session->game;
-        if (id < 0 || id >= game->w * game->h) {
-            controller_send_int(session, "GAC", PROTOCOL_GAC_WRONG_PIECE);
-        } else {
-            Piece *piece = game->pieces[id];
-            piece->x = x;
-            piece->y = y;
-
-            controller_send_int(session, "GAC", PROTOCOL_GAC_OK);
-            controller_broadcast_game_action(session, game, piece);
-            printf("  [%d] - Move %d -> %d, %d\n", session->id, id, x, y);
-        }
-
-    } else {
-        controller_send_int(session, "GAC", PROTOCOL_GAC_WRONG_FORMAT);
+        return;
     }
+
+    Game* game = session->game;
+
+    // split pieces
+    char* next = content;
+    size_t len = strlen(content);
+    for (int i = 0; i < len; ++i) {
+        char c = content[i];
+
+        if (c == ';') {
+            content[i] = '\0';
+
+            if (next == NULL) {
+                // nothing
+
+            } else if (sscanf(next, "%d,%d,%d", &id, &x, &y)) {
+
+                if (id < 0 || id >= game->w * game->h) {
+                    controller_send_int(session, "GAC", PROTOCOL_GAC_WRONG_PIECE);
+                    return;
+
+                } else {
+                    Piece *piece = game->pieces[id];
+                    piece->x = x;
+                    piece->y = y;
+
+                    controller_broadcast_game_action(session, game, piece);
+                    printf("  [%d] - Move %d -> %d, %d\n", session->id, id, x, y);
+                }
+
+            } else {
+                controller_send_int(session, "GAC", PROTOCOL_GAC_WRONG_FORMAT);
+                return;
+            }
+
+            next = content + i + 1;
+        }
+    }
+    controller_send_int(session, "GAC", PROTOCOL_GAC_OK);
 }
 
 static void controller_process_(Session *session, char *content) {

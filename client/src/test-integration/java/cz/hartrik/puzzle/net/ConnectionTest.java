@@ -2,10 +2,7 @@ package cz.hartrik.puzzle.net;
 
 import cz.hartrik.common.Exceptions;
 import cz.hartrik.puzzle.net.protocol.*;
-import java.util.Arrays;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.Future;
 import org.junit.Test;
 
@@ -230,7 +227,11 @@ public class ConnectionTest {
             Future<JoinGameResponse> join = connection.sendJoinGame(game.get().getGameID());
             assertThat(join.get(), is(JoinGameResponse.OK));
 
-            Future<GenericResponse> move = connection.sendGameAction(0, 45, 95);
+            List<GameStateResponse.Piece> pieces = Arrays.asList(
+                    new GameStateResponse.Piece(0, 45, 95),
+                    new GameStateResponse.Piece(1, 120, 64)
+            );
+            Future<GenericResponse> move = connection.sendGameAction(pieces);
             assertThat(move.get(), is(GenericResponse.OK));
         }
     }
