@@ -44,6 +44,16 @@ static bool set_non_blocking(int fd) {
     return true;
 }
 
+static void handle_error(Session* session) {
+    if ((errno != EAGAIN) && (errno != EWOULDBLOCK)) {
+        if (errno != EPIPE) {
+            printf("  [%d] Error", session->id);
+            perror("");
+        }
+        session->status = SESSION_STATUS_SHOULD_DISCONNECT;
+    }
+}
+
 int server_start(int port) {
     // Create socket
     int server_fd = socket(AF_INET, SOCK_STREAM, IPPROTO_IP /* TPC */);
@@ -151,8 +161,6 @@ void* game_thread_handler(void *arg) {
 
                 printf("  [%d] Client disconnected\n", session->id);
             }
-
-            fflush(stdout);
         }
 
         pthread_mutex_unlock(&shared_lock);
@@ -180,14 +188,12 @@ static void process_session(Session* session, char socket_buffer[SERVER_SOCKET_B
 
     // write
     if (session->to_send.index > 0) {
-        ssize_t written = write(socket_fd, session->to_send.content,
-                                session->to_send.index);
+        ssize_t written = write(socket_fd, session->to_send.content, session->to_send.index);
         if (written > 0) {
             stats_add_bytes_sent(written);
 
             printf("  [%d] << %d B\n", session->id,
                    (int) session->to_send.index);
-            fflush(stdout);
 
             if (session->to_send.index == written) {
                 buffer_reset(&session->to_send);
@@ -198,17 +204,12 @@ static void process_session(Session* session, char socket_buffer[SERVER_SOCKET_B
 
         } else {
             // end of stream or timeout
-            if ((errno != EAGAIN) && (errno != EWOULDBLOCK)) {
-                printf("  [%d] Error", session->id);
-                perror("");
-                session->status = SESSION_STATUS_SHOULD_DISCONNECT;
-            }
+            handle_error(session);
         }
     }
 
     // read
-    ssize_t recv_size = recv(socket_fd, socket_buffer,
-                             SERVER_SOCKET_BUFFER_SIZE, 0);
+    ssize_t recv_size = recv(socket_fd, socket_buffer, SERVER_SOCKET_BUFFER_SIZE, 0);
     if (recv_size > 0) {
         stats_add_bytes_received(recv_size);
 
@@ -222,11 +223,7 @@ static void process_session(Session* session, char socket_buffer[SERVER_SOCKET_B
 
     } else if (recv_size == -1) {
         // end of stream or timeout
-        if ((errno != EAGAIN) && (errno != EWOULDBLOCK)) {
-            printf("  [%d] Error", session->id);
-            perror("");
-            session->status = SESSION_STATUS_SHOULD_DISCONNECT;
-        }
+        handle_error(session);
 
     } else {
         // no data...
