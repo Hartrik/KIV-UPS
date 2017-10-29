@@ -2,7 +2,7 @@
 /**
  *
  * @author: Patrik Harag
- * @version: 2017-10-28
+ * @version: 2017-10-29
  */
 
 #ifndef SERVER_SESSION_H
@@ -46,6 +46,7 @@ typedef struct _Session {
 void session_init(Session *session);
 void session_free(Session* session);
 
+bool session_is_active(Session *session);
 bool session_is_logged(Session* session);
 bool session_is_in_game(Session* session);
 

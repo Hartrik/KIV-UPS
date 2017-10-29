@@ -1,6 +1,8 @@
 package cz.hartrik.puzzle.page.game;
 
 import cz.hartrik.puzzle.Application;
+import cz.hartrik.puzzle.net.ConnectionHolder;
+import cz.hartrik.puzzle.net.MessageConsumer;
 import cz.hartrik.puzzle.net.protocol.GameStateResponse;
 import cz.hartrik.puzzle.net.protocol.GenericResponse;
 import cz.hartrik.puzzle.page.Page;
@@ -8,6 +10,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
+import java.util.logging.Logger;
 import java.util.stream.Collectors;
 import javafx.application.Platform;
 import javafx.scene.Group;
@@ -27,6 +30,8 @@ import javafx.scene.text.Font;
  */
 public class PuzzlePage implements Page {
 
+    private static final Logger LOGGER = Logger.getLogger(PuzzlePage.class.getName());
+
     private final Application application;
     private final int gameID;
     private final Image image;
@@ -41,6 +46,7 @@ public class PuzzlePage implements Page {
         this.gameID = gameID;
         this.image = image;
         this.desk = createDesk(initial);
+        initGameUpdatesListener();
     }
 
     private Group createDesk(GameStateResponse initialState) {
@@ -49,8 +55,8 @@ public class PuzzlePage implements Page {
         Group group = new Group();
 
         this.pieces = new ArrayList<>();
-        for (int col = 0; col < numOfColumns; col++) {
-            for (int row = 0; row < numOfRows; row++) {
+        for (int row = 0; row < numOfRows; row++) {
+            for (int col = 0; col < numOfColumns; col++) {
                 int x = col * Piece.SIZE;
                 int y = row * Piece.SIZE;
                 int index = col + row * numOfColumns;
@@ -97,6 +103,38 @@ public class PuzzlePage implements Page {
                     }
             );
         });
+    }
+
+    private void initGameUpdatesListener() {
+        ConnectionHolder holder = application.getConnection();
+        holder.getConnection().addConsumer("GUP", MessageConsumer.persistant(s -> {
+            GameStateResponse gameState = GameStateResponse.parse(s);
+            application.getConnection().async(
+                    c -> {
+                        if (gameState.isCorrupted())
+                            throw new RuntimeException(gameState.getException());
+
+                        Platform.runLater(() -> update(gameState));
+                    },
+                    e -> {
+                        e.printStackTrace();
+                    }
+            );
+        }));
+    }
+
+    private void update(GameStateResponse gameState) {
+        for (GameStateResponse.Piece p : gameState.getPieces()) {
+            if (p.getId() < 0 || p.getId() >= pieces.size()) {
+                LOGGER.warning("Piece id out of range");
+            } else {
+                Piece piece = pieces.get(p.getId());
+                piece.setLastSyncX(p.getX());
+                piece.setLastSyncY(p.getY());
+                piece.moveX(p.getX());
+                piece.moveY(p.getY());
+            }
+        }
     }
 
     private VBox createRightPanel() {

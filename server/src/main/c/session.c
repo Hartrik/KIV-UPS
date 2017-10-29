@@ -2,7 +2,7 @@
 /**
  *
  * @author: Patrik Harag
- * @version: 2017-10-28
+ * @version: 2017-10-29
  */
 
 #include <memory.h>
@@ -24,8 +24,12 @@ void session_free(Session* session) {
     buffer_free(&(session->to_send));
 }
 
+bool session_is_active(Session *session) {
+    return session->status == SESSION_STATUS_CONNECTED;
+}
+
 bool session_is_logged(Session* session) {
-    return session->name[0] != 0;
+    return session_is_active(session) && session->name[0] != 0;
 }
 
 bool session_is_in_game(Session* session) {

@@ -25,6 +25,7 @@ public class ReaderThread extends Thread {
     public ReaderThread(Consumer<Exception> onException) {
         this.onException = onException;
         this.consumers = new ConcurrentHashMap<>();
+        setDaemon(true);
     }
 
     public synchronized void initStream(InputStream inputStream, Charset charset) {

@@ -2,14 +2,13 @@
 /**
  *
  * @author: Patrik Harag
- * @version: 2017-10-15
+ * @version: 2017-10-29
  */
 
 #include <stdio.h>
 #include <assert.h>
 #include <string.h>
 #include <stdbool.h>
-#include <pthread.h>
 #include "controller.h"
 #include "protocol.h"
 #include "utils.h"
@@ -198,7 +197,7 @@ static void controller_process_GST(Session *session, char *content) {
             size_t pieces = game->h * game->w;
 
             Buffer buffer;
-            buffer_init(&buffer, 2 * (pieces /*separators*/ + pieces * 4 /*digits*/));
+            buffer_init(&buffer, 2 * (pieces /*separators*/ + pieces * 5 /*digits*/));
 
             for (int i = 0; i < pieces; ++i) {
                 Piece* p = game->pieces[i];
@@ -237,9 +236,12 @@ static void controller_process_GAC(Session *session, char *content) {
         if (id < 0 || id >= game->w * game->h) {
             controller_send_int(session, "GAC", PROTOCOL_GAC_WRONG_PIECE);
         } else {
-            game->pieces[id]->x = x;
-            game->pieces[id]->y = y;
+            Piece *piece = game->pieces[id];
+            piece->x = x;
+            piece->y = y;
+
             controller_send_int(session, "GAC", PROTOCOL_GAC_OK);
+            controller_broadcast_game_action(session, game, piece);
             printf("  [%d] - Move %d -> %d, %d\n", session->id, id, x, y);
         }
 
@@ -292,6 +294,32 @@ void controller_process_message(Session *session, char *type, char *content) {
     } else {
         session->corrupted_messages++;
         printf("  [%d] - Unknown command: %s\n", session->id, type);
+    }
+}
+
+void controller_broadcast_game_action(Session* session, Game* game, Piece* p) {
+    for (int i = 0; i < session_pool.sessions_size; ++i) {
+        Session* s = session_pool.sessions[i];
+        if (s != session && session_is_in_game(s) && s->game == game) {
+            Buffer buffer;
+            buffer_init(&buffer, 3 * (1 /*separators*/ + 5 /*digits*/));
+
+            char temp[12];
+            sprintf(temp, "%d", p->id);
+            buffer_add_string(&buffer, temp);
+            buffer_add(&buffer, ',');
+            sprintf(temp, "%d", p->x);
+            buffer_add_string(&buffer, temp);
+            buffer_add(&buffer, ',');
+            sprintf(temp, "%d", p->y);
+            buffer_add_string(&buffer, temp);
+            buffer_add(&buffer, ';');
+
+            buffer_add(&buffer, '\0');
+            controller_send(s, "GUP", buffer.content);
+
+            buffer_free(&buffer);
+        }
     }
 }
 

@@ -5,10 +5,10 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- * Server response to the GST request.
+ * Server response to the GST / GUP request.
  *
  * @author Patrik Harag
- * @version 2017-10-15
+ * @version 2017-10-29
  */
 public class GameStateResponse {
 
@@ -16,7 +16,12 @@ public class GameStateResponse {
      * Represents a piece.
      */
     public static class Piece {
+        int id;
         int x, y;
+
+        public int getId() {
+            return id;
+        }
 
         public int getX() {
             return x;
@@ -68,17 +73,27 @@ public class GameStateResponse {
         try {
             List<Piece> list = new ArrayList<>();
 
+            int i = 0;
             for (String pieceStr : string.split(";")) {
                 String[] valStr = pieceStr.split(",");
-
-                if (valStr.length != 2)
-                    return new GameStateResponse(new RuntimeException("Wrong format!"));
-
                 Piece p = new Piece();
-                p.x = Integer.parseInt(valStr[0]);
-                p.y = Integer.parseInt(valStr[1]);
+
+                if (valStr.length == 2) {
+                    p.id = i;
+                    p.x = Integer.parseInt(valStr[0]);
+                    p.y = Integer.parseInt(valStr[1]);
+
+                } else if (valStr.length == 3) {
+                    p.id = Integer.parseInt(valStr[0]);
+                    p.x = Integer.parseInt(valStr[1]);
+                    p.y = Integer.parseInt(valStr[2]);
+
+                } else {
+                    return new GameStateResponse(new RuntimeException("Wrong format!"));
+                }
 
                 list.add(p);
+                i++;
             }
 
             return new GameStateResponse(list);

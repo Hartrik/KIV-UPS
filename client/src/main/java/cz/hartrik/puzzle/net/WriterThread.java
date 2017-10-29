@@ -22,6 +22,7 @@ public class WriterThread extends Thread {
     public WriterThread(Consumer<Exception> onException) {
         this.onException = onException;
         this.queue = new LinkedBlockingQueue<>();
+        setDaemon(true);
     }
 
     public synchronized void initStream(OutputStream outputStream, Charset charset) {
