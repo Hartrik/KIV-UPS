@@ -18,24 +18,29 @@ import javafx.scene.shape.Shape;
  */
 public class PieceNode extends Parent {
 
+    private final Piece piece;
     private final double xInImage;
     private final double yInImage;
     private double startDragX;
     private double startDragY;
     private Point2D dragAnchor;
+    private final PieceMoveAdapter moveAdapter;
 
-    public PieceNode(Image image, double xInImage, double yInImage, int size) {
+    public PieceNode(Piece piece, Image image, double xInImage, double yInImage,
+                     PieceMoveAdapter moveAdapter) {
 
+        this.piece = piece;
         this.xInImage = xInImage;
         this.yInImage = yInImage;
+        this.moveAdapter = moveAdapter;
 
         // ohraničení
-        Shape pieceStroke = createPiece(size);
+        Shape pieceStroke = createPiece(piece.getSize());
         pieceStroke.setFill(null);
         pieceStroke.setStroke(Color.BLACK);
 
         // dílek
-        Shape pieceClip = createPiece(size);
+        Shape pieceClip = createPiece(piece.getSize());
         pieceClip.setFill(Color.WHITE);
         pieceClip.setStroke(null);
 
@@ -64,6 +69,8 @@ public class PieceNode extends Parent {
 
             setTranslateX((int) newTranslateX);  // rounded to integer
             setTranslateY((int) newTranslateY);
+
+            moveAdapter.move(piece);
         });
     }
 

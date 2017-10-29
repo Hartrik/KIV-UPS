@@ -31,9 +31,11 @@ public class Piece {
      * @param xInImage horizontal position in the image
      * @param yInImage vertical position in the image
      */
-    public Piece(int id, Image image, final double xInImage, final double yInImage) {
+    public Piece(int id, Image image, final double xInImage, final double yInImage,
+                 PieceMoveAdapter moveAdapter) {
+
         this.id = id;
-        this.node = new PieceNode(image, xInImage, yInImage, SIZE);
+        this.node = new PieceNode(this, image, xInImage, yInImage, moveAdapter);
 
         xPos.bind(node.translateXProperty().add(xInImage));
         yPos.bind(node.translateYProperty().add(yInImage));
@@ -41,6 +43,10 @@ public class Piece {
 
     public PieceNode getNode() {
         return node;
+    }
+
+    public int getSize() {
+        return SIZE;
     }
 
     public int getId() {

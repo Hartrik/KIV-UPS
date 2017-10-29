@@ -55,12 +55,14 @@ public class PuzzlePage implements Page {
         Group group = new Group();
 
         this.pieces = new ArrayList<>();
+        PieceMoveAdapter moveAdapter = new PieceMoveAdapter(pieces);
+
         for (int row = 0; row < numOfRows; row++) {
             for (int col = 0; col < numOfColumns; col++) {
                 int x = col * Piece.SIZE;
                 int y = row * Piece.SIZE;
                 int index = col + row * numOfColumns;
-                Piece piece = new Piece(index, image, x, y);
+                Piece piece = new Piece(index, image, x, y, moveAdapter);
 
                 GameStateResponse.Piece p = initialState.getPieces().get(index);
                 piece.moveX(p.getX());
