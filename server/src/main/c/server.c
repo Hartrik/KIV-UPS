@@ -184,7 +184,7 @@ static void process_session(Session* session, char socket_buffer[SERVER_SOCKET_B
     int socket_fd = session->socket_fd;
     unsigned long long cycle_start = utils_current_millis();
 
-    controller_update(session, cycle_start);
+    controller_update_session(session, cycle_start);
 
     // write
     if (session->to_send.index > 0) {

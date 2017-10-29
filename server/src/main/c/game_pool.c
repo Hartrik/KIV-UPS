@@ -2,12 +2,11 @@
 /**
  *
  * @author: Patrik Harag
- * @version: 2017-10-28
+ * @version: 2017-10-29
  */
 
 #include <stdlib.h>
 #include "game_pool.h"
-#include "session.h"
 
 static void ensure_capacity(GamePool* game_pool) {
     if (game_pool->games_capacity >= game_pool->games_size + 1)
@@ -34,7 +33,14 @@ bool gp_can_create_game(GamePool* game_pool, Session *session) {
     if (session_is_in_game(session))
         return false;
 
-    if (game_pool->games_size == GAME_POOL_MAX_GAMES)
+    int count = 0;
+    for (int i = 0; i < game_pool->games_size; ++i) {
+        Game* game = game_pool->games[i];
+        if (!game->finished)
+            count++;
+    }
+
+    if (count >= GAME_POOL_MAX_GAMES)
         return false;
 
     return true;
@@ -44,8 +50,8 @@ Game *gp_create_game(GamePool *game_pool, unsigned int w, unsigned int h) {
     Game* game = (Game *) calloc(1, sizeof(Game));
     game_init(game, ++game_pool->last_id, w, h);
     game_shuffle(game,
-                 (int) (game->w * GAME_PIECE_SIZE * GAME_SHUFFLE_MULTIPIER * GAME_WH_RATIO / 2),
-                 (int) (game->h * GAME_PIECE_SIZE * GAME_SHUFFLE_MULTIPIER / GAME_WH_RATIO / 2));
+                 (int) (game->w * GAME_PIECE_SIZE * GAME_SHUFFLE_MULTIPLIER * GAME_WH_RATIO / 2),
+                 (int) (game->h * GAME_PIECE_SIZE * GAME_SHUFFLE_MULTIPLIER / GAME_WH_RATIO / 2));
 
     game_pool->games_size++;
     ensure_capacity(game_pool);

@@ -2,6 +2,7 @@ package cz.hartrik.puzzle.net;
 
 import cz.hartrik.puzzle.net.protocol.*;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
 import org.junit.Test;
 
@@ -201,6 +202,40 @@ public class ConnectionTest {
             );
             Future<GenericResponse> move = connection.sendGameAction(pieces);
             assertThat(move.get(), is(GenericResponse.OK));
+        }
+    }
+
+    @Test(timeout = DEFAULT_TIMEOUT)
+    public void testWin() throws Exception {
+        try (Connection connection = ConnectionProvider.connect()) {
+            Future<LogInResponse> response = connection.sendLogIn("Nick");
+            assertThat(response.get(), is(LogInResponse.OK));
+
+            Future<NewGameResponse> game = connection.sendNewGame(5, 5);
+            assertThat(game.get().getStatus(), is(NewGameResponse.Status.OK));
+            assertThat(game.get().getGameID() >= 0, is(true));
+
+            Future<JoinGameResponse> join = connection.sendJoinGame(game.get().getGameID());
+            assertThat(join.get(), is(JoinGameResponse.OK));
+
+            CompletableFuture<Void> win = new CompletableFuture<>();
+            connection.addConsumer("GWI", MessageConsumer.temporary(r -> {
+                win.complete(null);
+            }));
+
+            int movX = -594;
+            int movY = 846;
+            List<GameStateResponse.Piece> pieces = new ArrayList<>();
+            for (int x = 0; x < 5; x++) {
+                for (int y = 0; y < 5; y++) {
+                    pieces.add(new GameStateResponse.Piece(
+                            x + y * 5, movX + x * 100, movY + y * 100));
+                }
+            }
+            Future<GenericResponse> move = connection.sendGameAction(pieces);
+            assertThat(move.get(), is(GenericResponse.OK));
+
+            win.get();
         }
     }
 

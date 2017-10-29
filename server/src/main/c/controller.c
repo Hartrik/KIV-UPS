@@ -28,8 +28,17 @@ static void check_timeout(Session *session, unsigned long long time) {
     }
 }
 
-void controller_update(Session *session, unsigned long long time) {
+void controller_update_session(Session *session, unsigned long long time) {
     check_timeout(session, time);
+}
+
+void controller_update_game(Game* game) {
+    if (!game->finished) {
+        game_check_is_finished(game);
+        if (game->finished) {
+            controller_broadcast_game_finished(game);
+        }
+    }
 }
 
 static bool parse_number(char* string, long* i) {
@@ -93,6 +102,8 @@ static void controller_process_GLI(Session *session, char *content) {
 
         for (int i = 0; i < count; ++i) {
             Game* game = game_pool.games[i];
+            if (game->finished) continue;
+
             char temp[12];
 
             sprintf(temp, "%d", game->id);
@@ -236,6 +247,12 @@ static void controller_process_GAC(Session *session, char *content) {
 
     Game* game = session->game;
 
+    if (game->finished) {
+        // ignore...
+        controller_send_int(session, "GAC", PROTOCOL_GAC_OK);
+        return;
+    }
+
     // split pieces
     char* next = content;
     size_t len = strlen(content);
@@ -272,6 +289,7 @@ static void controller_process_GAC(Session *session, char *content) {
         }
     }
     controller_send_int(session, "GAC", PROTOCOL_GAC_OK);
+    controller_update_game(game);
 }
 
 static void controller_process_GOF(Session *session, char *content) {
@@ -351,6 +369,15 @@ void controller_broadcast_game_action(Session* session, Game* game, Piece* p) {
             controller_send(s, "GUP", buffer.content);
 
             buffer_free(&buffer);
+        }
+    }
+}
+
+void controller_broadcast_game_finished(Game* game) {
+    for (int i = 0; i < session_pool.sessions_size; ++i) {
+        Session* s = session_pool.sessions[i];
+        if (session_is_in_game(s) && s->game == game) {
+            controller_send_int(s, "GWI", game->id);
         }
     }
 }

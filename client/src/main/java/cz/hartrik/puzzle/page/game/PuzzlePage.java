@@ -6,6 +6,7 @@ import cz.hartrik.puzzle.net.MessageConsumer;
 import cz.hartrik.puzzle.net.protocol.GameStateResponse;
 import cz.hartrik.puzzle.net.protocol.GenericResponse;
 import cz.hartrik.puzzle.page.Page;
+import cz.hartrik.puzzle.page.WinPage;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -46,7 +47,9 @@ public class PuzzlePage implements Page {
         this.gameID = gameID;
         this.image = image;
         this.desk = createDesk(initial);
+
         initGameUpdatesListener();
+        initGameWinListener();
     }
 
     private Group createDesk(GameStateResponse initialState) {
@@ -127,6 +130,16 @@ public class PuzzlePage implements Page {
                         e.printStackTrace();
                     }
             );
+        }));
+    }
+
+    private void initGameWinListener() {
+        ConnectionHolder holder = application.getConnection();
+        holder.getConnection().addConsumer("GWI", MessageConsumer.persistant(s -> {
+            Platform.runLater(() -> {
+                Page winPage = new WinPage(application, this, image);
+                application.setActivePage(winPage);
+            });
         }));
     }
 
