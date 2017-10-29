@@ -14,7 +14,7 @@ import javafx.scene.shape.Shape;
  * Node that represents a puzzle piece
  *
  * @author Patrik Harag
- * @version 2017-09-28
+ * @version 2017-10-29
  */
 public class PieceNode extends Parent {
 
@@ -56,18 +56,14 @@ public class PieceNode extends Parent {
             dragAnchor = new Point2D(me.getSceneX(), me.getSceneY());
         });
 
-        setOnMouseReleased((MouseEvent me) -> {
-            // TODO
-        });
-
         setOnMouseDragged((MouseEvent me) -> {
             double newTranslateX = startDragX
                     + me.getSceneX() - dragAnchor.getX();
             double newTranslateY = startDragY
                     + me.getSceneY() - dragAnchor.getY();
 
-            setTranslateX(newTranslateX);
-            setTranslateY(newTranslateY);
+            setTranslateX((int) newTranslateX);  // rounded to integer
+            setTranslateY((int) newTranslateY);
         });
     }
 

@@ -2,6 +2,7 @@ package cz.hartrik.puzzle.page.game;
 
 import cz.hartrik.puzzle.Application;
 import cz.hartrik.puzzle.net.protocol.GameStateResponse;
+import cz.hartrik.puzzle.net.protocol.GenericResponse;
 import cz.hartrik.puzzle.page.Page;
 import java.util.ArrayList;
 import java.util.List;
@@ -22,7 +23,7 @@ import javafx.scene.text.Font;
 /**
  *
  * @author Patrik Harag
- * @version 2017-10-17
+ * @version 2017-10-29
  */
 public class PuzzlePage implements Page {
 
@@ -52,12 +53,16 @@ public class PuzzlePage implements Page {
             for (int row = 0; row < numOfRows; row++) {
                 int x = col * Piece.SIZE;
                 int y = row * Piece.SIZE;
-                final Piece piece = new Piece(image, x, y);
+                int index = col + row * numOfColumns;
+                Piece piece = new Piece(index, image, x, y);
 
-                // TODO: check
-                GameStateResponse.Piece p = initialState.getPieces().get(col + row * numOfColumns);
+                GameStateResponse.Piece p = initialState.getPieces().get(index);
                 piece.moveX(p.getX());
                 piece.moveY(p.getY());
+                piece.setLastSyncX(p.getX());
+                piece.setLastSyncY(p.getY());
+
+                initListener(piece);
 
                 pieces.add(piece);
                 group.getChildren().add(piece.getNode());
@@ -65,6 +70,27 @@ public class PuzzlePage implements Page {
         }
 
         return group;
+    }
+
+    private void initListener(Piece piece) {
+        piece.getNode().setOnMouseReleased(event -> {
+            application.getConnection().async(
+                    c -> {
+                        GenericResponse res = c.sendGameAction(piece.getId(), piece.getX(), piece.getY())
+                                .get(2000, TimeUnit.MILLISECONDS);
+
+                        if (res != GenericResponse.OK) {
+                            throw new RuntimeException(res.toString());
+                        } else {
+                            piece.setLastSyncX(piece.getX());
+                            piece.setLastSyncY(piece.getY());
+                        }
+                    },
+                    e -> {
+                        e.printStackTrace();
+                    }
+            );
+        });
     }
 
     private VBox createRightPanel() {
@@ -92,11 +118,11 @@ public class PuzzlePage implements Page {
                         playersContent.setText(text);
                     });
 
-                    Thread.sleep(200);
+                    Thread.sleep(1000);
                 }
             },
             e -> {
-                // ignored, not important...
+                e.printStackTrace();
             }
         );
 
