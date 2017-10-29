@@ -32,10 +32,10 @@ public class Piece {
      * @param yInImage vertical position in the image
      */
     public Piece(int id, Image image, final double xInImage, final double yInImage,
-                 PieceMoveAdapter moveAdapter) {
+                 PieceMoveFinalizer moveFinalizer) {
 
         this.id = id;
-        this.node = new PieceNode(this, image, xInImage, yInImage, moveAdapter);
+        this.node = new PieceNode(this, image, xInImage, yInImage, moveFinalizer);
 
         xPos.bind(node.translateXProperty().add(xInImage));
         yPos.bind(node.translateYProperty().add(yInImage));

@@ -55,14 +55,15 @@ public class PuzzlePage implements Page {
         Group group = new Group();
 
         this.pieces = new ArrayList<>();
-        PieceMoveAdapter moveAdapter = new PieceMoveAdapter(pieces);
+        Desk desk = new Desk(numOfColumns, numOfRows, pieces);
+        PieceMoveFinalizer moveFinalizer = new PieceMoveFinalizer(desk);
 
         for (int row = 0; row < numOfRows; row++) {
             for (int col = 0; col < numOfColumns; col++) {
                 int x = col * Piece.SIZE;
                 int y = row * Piece.SIZE;
                 int index = col + row * numOfColumns;
-                Piece piece = new Piece(index, image, x, y, moveAdapter);
+                Piece piece = new Piece(index, image, x, y, moveFinalizer);
 
                 GameStateResponse.Piece p = initialState.getPieces().get(index);
                 piece.moveX(p.getX());
@@ -70,7 +71,7 @@ public class PuzzlePage implements Page {
                 piece.setLastSyncX(p.getX());
                 piece.setLastSyncY(p.getY());
 
-                initPieceMovedListener(piece);
+                initPieceMoveCompleteListener(piece, moveFinalizer);
 
                 pieces.add(piece);
                 group.getChildren().add(piece.getNode());
@@ -80,8 +81,10 @@ public class PuzzlePage implements Page {
         return group;
     }
 
-    private void initPieceMovedListener(Piece piece) {
+    private void initPieceMoveCompleteListener(Piece piece, PieceMoveFinalizer moveFinalizer) {
         piece.getNode().setOnMouseReleased(event -> {
+            moveFinalizer.moveComplete(piece);
+
             if (!piece.changed())
                 return;  // piece is on the same position
 

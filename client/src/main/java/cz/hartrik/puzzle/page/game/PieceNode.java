@@ -2,7 +2,6 @@ package cz.hartrik.puzzle.page.game;
 
 import javafx.geometry.Point2D;
 import javafx.scene.Parent;
-import javafx.scene.effect.DropShadow;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.MouseEvent;
@@ -24,15 +23,13 @@ public class PieceNode extends Parent {
     private double startDragX;
     private double startDragY;
     private Point2D dragAnchor;
-    private final PieceMoveAdapter moveAdapter;
 
     public PieceNode(Piece piece, Image image, double xInImage, double yInImage,
-                     PieceMoveAdapter moveAdapter) {
+                     PieceMoveFinalizer moveFinalizer) {
 
         this.piece = piece;
         this.xInImage = xInImage;
         this.yInImage = yInImage;
-        this.moveAdapter = moveAdapter;
 
         // ohraničení
         Shape pieceStroke = createPiece(piece.getSize());
@@ -52,7 +49,6 @@ public class PieceNode extends Parent {
         getChildren().addAll(imageView, pieceStroke);
 
         setCache(true);
-        setActive();
 
         setOnMousePressed((MouseEvent me) -> {
             toFront();
@@ -62,6 +58,8 @@ public class PieceNode extends Parent {
         });
 
         setOnMouseDragged((MouseEvent me) -> {
+            if (dragAnchor == null) return;
+
             double newTranslateX = startDragX
                     + me.getSceneX() - dragAnchor.getX();
             double newTranslateY = startDragY
@@ -70,7 +68,7 @@ public class PieceNode extends Parent {
             setTranslateX((int) newTranslateX);  // rounded to integer
             setTranslateY((int) newTranslateY);
 
-            moveAdapter.move(piece);
+            moveFinalizer.move(piece);
         });
     }
 
@@ -90,18 +88,6 @@ public class PieceNode extends Parent {
         rec.setWidth(size);
         rec.setHeight(size);
         return rec;
-    }
-
-    public void setActive() {
-        setDisable(false);
-        setEffect(new DropShadow());
-        toFront();
-    }
-
-    public void setInactive() {
-        setEffect(null);
-        setDisable(true);
-        toBack();
     }
 
     public double getXInImage() {
