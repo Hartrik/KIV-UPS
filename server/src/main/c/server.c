@@ -151,6 +151,8 @@ void* game_thread_handler(void *arg) {
             fflush(stdout);
         }
 
+        pthread_mutex_unlock(&shared_lock);
+
         unsigned long long cycle_end = utils_current_millis();
         unsigned long long cycle = cycle_end - cycle_start;
         if (cycle < SERVER_CYCLE) {
@@ -158,8 +160,6 @@ void* game_thread_handler(void *arg) {
         } else if (cycle > SERVER_CYCLE_LONG) {
             printf("  Long cycle: %llu ms\n", cycle);
         }
-
-        pthread_mutex_unlock(&shared_lock);
     }
 
     buffer_free(&message_buffer);
