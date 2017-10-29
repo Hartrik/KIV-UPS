@@ -111,6 +111,9 @@ int server_start(int port) {
     close(server_fd);
     printf("Server socket closed\n");
 
+    pthread_join(thread, NULL);
+    printf("Game thread closed\n");
+
     return 0;
 }
 

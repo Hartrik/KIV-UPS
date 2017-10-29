@@ -21,8 +21,6 @@ void sigint_handler(int sig_number) {
 
     printf("\nTERMINATED\n");
     TERMINATED = true;
-
-    utils_sleep(SERVER_TIMEOUT);  // wait for other threads to finish
 }
 
 void init_SIGINT_handler() {
