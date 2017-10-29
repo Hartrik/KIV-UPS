@@ -2,13 +2,14 @@
 /**
  *
  * @author: Patrik Harag
- * @version: 2017-10-16
+ * @version: 2017-10-29
  */
 
 #ifndef SERVER_BUFFER_H
 #define SERVER_BUFFER_H
 
 #define BUFFER_INC_RATIO 2
+#define BUFFER_MIN_CAPACITY 2
 
 typedef struct _Buffer {
     size_t index;

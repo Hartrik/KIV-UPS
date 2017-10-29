@@ -2,7 +2,7 @@
 /**
  *
  * @author: Patrik Harag
- * @version: 2017-10-16
+ * @version: 2017-10-29
  */
 
 #include <stdlib.h>
@@ -12,6 +12,9 @@
 
 
 void buffer_init(Buffer *buffer, size_t length) {
+    if (length < BUFFER_MIN_CAPACITY)
+        length = BUFFER_MIN_CAPACITY;
+
     buffer->index = 0;
     buffer->content_length = length;
     buffer->content = malloc(length);
