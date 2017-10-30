@@ -1,7 +1,6 @@
 package cz.hartrik.puzzle.page;
 
 import cz.hartrik.puzzle.Application;
-import cz.hartrik.puzzle.net.protocol.GameListResponse;
 import cz.hartrik.puzzle.net.protocol.GameStateResponse;
 import cz.hartrik.puzzle.net.protocol.JoinGameResponse;
 import cz.hartrik.puzzle.net.protocol.NewGameResponse;
@@ -73,6 +72,7 @@ public class NewGamePage extends CancelablePage {
                 Future<NewGameResponse> newF = c.sendNewGame(w, h);
                 NewGameResponse newR = newF.get(Application.DEFAULT_TIMEOUT, TimeUnit.MILLISECONDS);
                 if (newR.getStatus() != NewGameResponse.Status.OK) {
+                    application.log("New game status: " + newR.getStatus());
                     Page page = new ErrorPage(application, this, newR.getStatus().name());
                     application.setActivePage(page);
                     return;
@@ -81,6 +81,7 @@ public class NewGamePage extends CancelablePage {
                 Future<JoinGameResponse> joinF = c.sendJoinGame(newR.getGameID());
                 JoinGameResponse joinR = joinF.get(Application.DEFAULT_TIMEOUT, TimeUnit.MILLISECONDS);
                 if (joinR != JoinGameResponse.OK) {
+                    application.log("Join status: " + joinR);
                     Page page = new ErrorPage(application, this, joinR.name());
                     application.setActivePage(page);
                     return;
@@ -89,6 +90,7 @@ public class NewGamePage extends CancelablePage {
                 Future<GameStateResponse> stateF = c.sendGameStateUpdate(newR.getGameID());
                 GameStateResponse stateR = stateF.get(Application.DEFAULT_TIMEOUT, TimeUnit.MILLISECONDS);
                 if (stateR.isCorrupted()) {
+                    application.logException("Game status:", stateR.getException());
                     Page page = new ErrorPage(application, this, stateR.getException().toString());
                     application.setActivePage(page);
                     return;
@@ -98,6 +100,7 @@ public class NewGamePage extends CancelablePage {
                 application.setActivePage(gamePage);
             },
             e -> {
+                application.logException("New game exception:", e);
                 Page page = new ErrorPage(application, this, e.toString());
                 application.setActivePage(page);
             }
