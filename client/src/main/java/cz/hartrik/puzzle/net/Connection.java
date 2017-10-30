@@ -31,6 +31,7 @@ public class Connection implements AutoCloseable {
     private ReaderThread reader;
     private WriterThread writer;
 
+    private volatile Runnable onConnectionLost;
     private volatile Exception exception;
 
     Connection(String host, int port) {
@@ -54,6 +55,10 @@ public class Connection implements AutoCloseable {
         writer.start();
     }
 
+    void setOnConnectionLost(Runnable onConnectionLost) {
+        this.onConnectionLost = onConnectionLost;
+    }
+
     public void addConsumer(String type, MessageConsumer consumer) {
         this.reader.addConsumer(type, consumer);
     }
@@ -64,6 +69,9 @@ public class Connection implements AutoCloseable {
         this.exception = e;
         e.printStackTrace();
         Exceptions.silent(this::closeNow);
+
+        if (onConnectionLost != null)
+            onConnectionLost.run();
     }
 
     private void send(String content) throws Exception {

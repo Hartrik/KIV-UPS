@@ -38,7 +38,7 @@ public class ErrorPage implements Page {
         textMessage.setWrapText(true);
 
         Button button = new Button("OK");
-        button.setOnAction(event -> application.getController().setActivePage(nextPage));
+        button.setOnAction(event -> application.setActivePage(nextPage));
         button.setDefaultButton(true);
         button.setPrefWidth(100);
         button.requestFocus();

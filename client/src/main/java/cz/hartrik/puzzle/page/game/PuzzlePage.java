@@ -214,7 +214,7 @@ public class PuzzlePage implements Page {
                 e -> {
                     // ignore errors
                     Platform.runLater(() -> {
-                        application.getController().setActivePage(previousPage);
+                        application.setActivePage(previousPage);
                     });
                 });
         });

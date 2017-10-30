@@ -1,6 +1,8 @@
 package cz.hartrik.puzzle;
 
 import cz.hartrik.puzzle.net.ConnectionHolder;
+import cz.hartrik.puzzle.page.ErrorPage;
+import cz.hartrik.puzzle.page.LogInPage;
 import cz.hartrik.puzzle.page.Page;
 import cz.hartrik.puzzle.service.ServiceManager;
 import java.io.PrintWriter;
@@ -22,6 +24,7 @@ public class Application {
     private final FrameStage frameStage;
     private final FrameController controller;
     private final ServiceManager serviceManager;
+    private final Page defaultPage;
 
     private ConnectionHolder connection;
 
@@ -29,6 +32,9 @@ public class Application {
         this.frameStage = frameStage;
         this.controller = controller;
         this.serviceManager = new ServiceManager(this);
+        this.defaultPage = new LogInPage(this);
+
+        setActivePage(defaultPage);
     }
 
     public FrameStage getStage() {
@@ -52,6 +58,12 @@ public class Application {
 
     public void setConnection(ConnectionHolder connection) {
         this.connection = connection;
+
+        connection.setOnConnectionLost(() -> {
+            Page errorPage = new ErrorPage(this, defaultPage, "Connection lost");
+            setActivePage(errorPage);
+            this.connection = null;
+        });
     }
 
     public ConnectionHolder getConnection() {
@@ -65,6 +77,10 @@ public class Application {
         String stackTrace = sw.toString(); // stack trace as a string
 
         LOGGER.warning(msg + "\n" + stackTrace);
+    }
+
+    public void log(String msg) {
+        LOGGER.warning(msg);
     }
 
     void onClose() {

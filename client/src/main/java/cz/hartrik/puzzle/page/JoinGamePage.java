@@ -18,13 +18,14 @@ import javafx.scene.control.ProgressIndicator;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.FlowPane;
+import javafx.scene.layout.VBox;
 import javafx.scene.text.Font;
 
 /**
  * A page with a game selection.
  *
  * @author Patrik Harag
- * @version 2017-10-17
+ * @version 2017-10-30
  */
 public class JoinGamePage extends CancelablePage {
 
@@ -61,6 +62,7 @@ public class JoinGamePage extends CancelablePage {
                 Platform.runLater(() -> onUpdate(listR));
             },
             e -> {
+                application.logException("On login:", e);
                 Platform.runLater(() -> onError(e));
             }
         );
@@ -72,7 +74,15 @@ public class JoinGamePage extends CancelablePage {
         textMessage.setStyle("-fx-text-fill: red;");
         textMessage.setWrapText(true);
 
-        box.getChildren().setAll(textMessage);
+        Button button = new Button("Retry");
+        button.setOnAction(event -> {
+            onShow();
+        });
+
+        VBox errorBox = new VBox();
+        errorBox.getChildren().setAll(textMessage, button);
+        errorBox.setSpacing(20);
+        box.getChildren().setAll(textMessage, errorBox);
     }
 
     private void onUpdate(GameListResponse list) {
@@ -115,6 +125,7 @@ public class JoinGamePage extends CancelablePage {
                 Future<JoinGameResponse> joinF = c.sendJoinGame(gameID);
                 JoinGameResponse joinR = joinF.get(Application.DEFAULT_TIMEOUT, TimeUnit.MILLISECONDS);
                 if (joinR != JoinGameResponse.OK) {
+                    application.log("Join status: " + joinR);
                     Page page = new ErrorPage(application, this, joinR.name());
                     application.setActivePage(page);
                     return;
@@ -123,6 +134,7 @@ public class JoinGamePage extends CancelablePage {
                 Future<GameStateResponse> stateF = c.sendGameStateUpdate(gameID);
                 GameStateResponse stateR = stateF.get(Application.DEFAULT_TIMEOUT, TimeUnit.MILLISECONDS);
                 if (stateR.isCorrupted()) {
+                    application.logException("Game status:", stateR.getException());
                     Page page = new ErrorPage(application, this, stateR.getException().toString());
                     application.setActivePage(page);
                     return;
@@ -132,6 +144,7 @@ public class JoinGamePage extends CancelablePage {
                 application.setActivePage(page);
             },
             e -> {
+                application.logException("Join exception:", e);
                 Page page = new ErrorPage(application, this, e.toString());
                 application.setActivePage(page);
             }

@@ -25,6 +25,10 @@ public class ConnectionHolder implements AutoCloseable {
         }));
     }
 
+    public void setOnConnectionLost(Runnable onConnectionLost) {
+        connection.setOnConnectionLost(onConnectionLost);
+    }
+
     public Thread async(Command command, Consumer<Exception> onError) {
         Thread thread = new Thread(() -> {
             try {

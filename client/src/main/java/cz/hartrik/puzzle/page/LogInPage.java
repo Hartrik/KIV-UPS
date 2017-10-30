@@ -55,16 +55,11 @@ public class LogInPage implements Page {
         });
 
         box.getChildren().addAll(title, dummy, userLabel, userTextField);
-
-        // TODO: password
-//        Label pw = new Label("Password:");
-//        PasswordField pwBox = new PasswordField();
-
         return box;
     }
 
     private void apply(String name) {
-        application.getController().setActivePage(new LoadingPage());
+        application.setActivePage(new LoadingPage());
 
         Connection connection = ConnectionProvider.lazyConnect();
         ConnectionHolder holder = new ConnectionHolder(connection);
