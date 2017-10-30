@@ -12,6 +12,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 import javafx.application.Platform;
@@ -169,6 +170,12 @@ public class PuzzlePage implements Page {
 
         Label playersContent = new Label();
         players.setFont(Font.font(12));
+        initUpdatePlayers(list -> {
+            Platform.runLater(() -> {
+                String text = list.stream().collect(Collectors.joining("\n"));
+                playersContent.setText(text);
+            });
+        });
 
         HBox dummy = new HBox();
         dummy.setFillHeight(true);
@@ -192,27 +199,41 @@ public class PuzzlePage implements Page {
         rightPanel.getChildren().setAll(
                 players, playersContent, dummy, leaveButton
         );
-
-        application.getConnection().async(
-            c -> {
-                while (!terminated) {
-                    Set<String> list = c.sendPlayerList(gameID)
-                            .get(2000, TimeUnit.MILLISECONDS);
-
-                    Platform.runLater(() -> {
-                        String text = list.stream().collect(Collectors.joining("\n"));
-                        playersContent.setText(text);
-                    });
-
-                    Thread.sleep(1000);
-                }
-            },
-            e -> {
-                e.printStackTrace();
-            }
-        );
-
         return rightPanel;
+    }
+
+    /**
+     * Init async updates of player list.
+     *
+     * @param playersConsumer output
+     */
+    private void initUpdatePlayers(Consumer<Set<String>> playersConsumer) {
+        ConnectionHolder.Command updatePlayers = c -> {
+            while (!terminated) {
+                Set<String> list = c.sendPlayerList(gameID)
+                        .get(2000, TimeUnit.MILLISECONDS);
+
+                playersConsumer.accept(list);
+
+                if (terminated) break;
+
+                try {
+                    Thread.sleep(2000);
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    break;
+                }
+            }
+        };
+
+        Consumer<Exception> onComplete = e -> {
+            if (e != null) {
+                // no problem, maybe next time
+                application.logException("GPL failed", e);
+            }
+        };
+
+        application.getConnection().asyncFinally(updatePlayers, onComplete);
     }
 
     @Override
