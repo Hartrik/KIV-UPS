@@ -255,6 +255,11 @@ public class PuzzlePage implements Page {
                 // no problem, maybe next time
                 application.logException("GPL failed", e);
             }
+
+            if (!terminated) {
+                // continue
+                initUpdatePlayers(playersConsumer);
+            }
         };
 
         application.getConnection().asyncFinally(updatePlayers, onComplete);
