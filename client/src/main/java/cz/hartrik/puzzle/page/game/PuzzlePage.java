@@ -5,6 +5,7 @@ import cz.hartrik.puzzle.net.ConnectionHolder;
 import cz.hartrik.puzzle.net.MessageConsumer;
 import cz.hartrik.puzzle.net.protocol.GameStateResponse;
 import cz.hartrik.puzzle.net.protocol.GenericResponse;
+import cz.hartrik.puzzle.page.LoadingPage;
 import cz.hartrik.puzzle.page.Page;
 import cz.hartrik.puzzle.page.WinPage;
 import java.util.ArrayList;
@@ -16,6 +17,7 @@ import java.util.stream.Collectors;
 import javafx.application.Platform;
 import javafx.scene.Group;
 import javafx.scene.Node;
+import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.image.Image;
@@ -27,7 +29,7 @@ import javafx.scene.text.Font;
 /**
  *
  * @author Patrik Harag
- * @version 2017-10-29
+ * @version 2017-10-30
  */
 public class PuzzlePage implements Page {
 
@@ -36,17 +38,21 @@ public class PuzzlePage implements Page {
     private final Application application;
     private final int gameID;
     private final Image image;
+    private final Page previousPage;
 
     private List<Piece> pieces;
     private Group desk;
 
+    private volatile boolean terminated = false;
+
     public PuzzlePage(Application application, int gameID,
-                      GameStateResponse initial, Image image) {
+                      GameStateResponse initial, Image image, Page previousPage) {
 
         this.application = application;
         this.gameID = gameID;
         this.image = image;
         this.desk = createDesk(initial);
+        this.previousPage = previousPage;
 
         initGameUpdatesListener();
         initGameWinListener();
@@ -117,25 +123,20 @@ public class PuzzlePage implements Page {
 
     private void initGameUpdatesListener() {
         ConnectionHolder holder = application.getConnection();
-        holder.getConnection().addConsumer("GUP", MessageConsumer.persistant(s -> {
+        holder.addConsumer("GUP", MessageConsumer.persistant(s -> {
             GameStateResponse gameState = GameStateResponse.parse(s);
-            application.getConnection().async(
-                    c -> {
-                        if (gameState.isCorrupted())
-                            throw new RuntimeException(gameState.getException());
-
-                        Platform.runLater(() -> update(gameState));
-                    },
-                    e -> {
-                        e.printStackTrace();
-                    }
-            );
+            if (gameState.isCorrupted()) {
+                // there is nothing to do with it...
+                application.logException("GUP corrupted:", gameState.getException());
+            } else {
+                Platform.runLater(() -> update(gameState));
+            }
         }));
     }
 
     private void initGameWinListener() {
         ConnectionHolder holder = application.getConnection();
-        holder.getConnection().addConsumer("GWI", MessageConsumer.persistant(s -> {
+        holder.addConsumer("GWI", MessageConsumer.persistant(s -> {
             Platform.runLater(() -> {
                 Page winPage = new WinPage(application, this, image);
                 application.setActivePage(winPage);
@@ -169,11 +170,32 @@ public class PuzzlePage implements Page {
         Label playersContent = new Label();
         players.setFont(Font.font(12));
 
-        rightPanel.getChildren().setAll(players, playersContent);
+        HBox dummy = new HBox();
+        dummy.setFillHeight(true);
+        VBox.setVgrow(dummy, Priority.SOMETIMES);
+
+        Button leaveButton = new Button("Leave game");
+        leaveButton.setOnAction(event -> {
+            onClose();
+            application.setActivePage(new LoadingPage());
+            application.getConnection().asyncFinally(
+                c -> c.sendLeaveGame().get(2000, TimeUnit.MILLISECONDS),
+                e -> {
+                    // ignore errors
+                    Platform.runLater(() -> {
+                        application.getController().setActivePage(previousPage);
+                    });
+                });
+        });
+        leaveButton.setPrefWidth(100);
+
+        rightPanel.getChildren().setAll(
+                players, playersContent, dummy, leaveButton
+        );
 
         application.getConnection().async(
             c -> {
-                while (true) {
+                while (!terminated) {
                     Set<String> list = c.sendPlayerList(gameID)
                             .get(2000, TimeUnit.MILLISECONDS);
 
@@ -204,4 +226,8 @@ public class PuzzlePage implements Page {
         return new HBox(scrollPane, rightPanel);
     }
 
+    @Override
+    public void onClose() {
+        terminated = true;
+    }
 }

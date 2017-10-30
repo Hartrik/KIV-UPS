@@ -94,7 +94,8 @@ public class NewGamePage extends CancelablePage {
                     return;
                 }
 
-                application.setActivePage(new PuzzlePage(application, newR.getGameID(), stateR, image));
+                Page gamePage = new PuzzlePage(application, newR.getGameID(), stateR, image, getPreviousPage());
+                application.setActivePage(gamePage);
             },
             e -> {
                 Page page = new ErrorPage(application, this, e.toString());

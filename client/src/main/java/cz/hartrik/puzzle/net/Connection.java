@@ -15,7 +15,7 @@ import java.util.stream.Stream;
 
 /**
  * @author Patrik Harag
- * @version 2017-10-29
+ * @version 2017-10-30
  */
 public class Connection implements AutoCloseable {
 
@@ -206,6 +206,19 @@ public class Connection implements AutoCloseable {
                     .append(piece.getY()).append(';');
         }
         sendMessage("GAC", sb.toString());
+
+        return future;
+    }
+
+    public Future<Void> sendLeaveGame() throws Exception {
+        connect();
+
+        CompletableFuture<Void> future = new CompletableFuture<>();
+        reader.addConsumer("GOF", MessageConsumer.temporary(response -> {
+            future.complete(null);
+        }));
+
+        sendMessage("GOF", "");
 
         return future;
     }

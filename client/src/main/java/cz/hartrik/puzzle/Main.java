@@ -51,6 +51,7 @@ public class Main extends javafx.application.Application {
         frameStage.setTitle(APP_TITLE);
         frameStage.getIcons().add(Resources.image(ICON, Main.class));
         frameStage.getFrameController().setActivePage(new LogInPage(app));
+        frameStage.setOnCloseRequest(e -> app.onClose());
 
         frameStage.show();
     }

@@ -15,7 +15,7 @@ import javafx.scene.text.Text;
  * A page with a cancel button.
  *
  * @author Patrik Harag
- * @version 2017-10-17
+ * @version 2017-10-30
  */
 public abstract class CancelablePage extends PageBase {
 
@@ -52,6 +52,10 @@ public abstract class CancelablePage extends PageBase {
         return box;
     }
 
-    public abstract Node getContent();
+    protected Page getPreviousPage() {
+        return previousPage;
+    }
+
+    protected abstract Node getContent();
 
 }

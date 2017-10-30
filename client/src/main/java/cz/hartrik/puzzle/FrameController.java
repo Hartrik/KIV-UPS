@@ -3,15 +3,15 @@ package cz.hartrik.puzzle;
 import cz.hartrik.puzzle.page.Page;
 import java.net.URL;
 import java.util.ResourceBundle;
-import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.layout.StackPane;
 import javafx.stage.Stage;
 
 /**
+ * JavaFX controller for main window.
  *
- * @version 2017-10-09
+ * @version 2017-10-30
  * @author Patrik Harag
  */
 public class FrameController implements Initializable {
@@ -21,8 +21,10 @@ public class FrameController implements Initializable {
     private Page activePage;
 
     public void setActivePage(Page activePage) {
-        if (this.activePage != null)
+        if (this.activePage != null) {
+            this.activePage.onClose();
             getRootPane().getChildren().remove(0);
+        }
 
         this.activePage = activePage;
         getRootPane().getChildren().add(0, activePage.getNode());
@@ -31,6 +33,10 @@ public class FrameController implements Initializable {
 
     public StackPane getRootPane() {
         return rootPane;
+    }
+
+    public Page getActivePage() {
+        return activePage;
     }
 
     // Initializable

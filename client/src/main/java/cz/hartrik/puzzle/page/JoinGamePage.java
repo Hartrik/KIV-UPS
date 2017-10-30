@@ -128,7 +128,8 @@ public class JoinGamePage extends CancelablePage {
                     return;
                 }
 
-                application.setActivePage(new PuzzlePage(application, gameID, stateR, image));
+                Page page = new PuzzlePage(application, gameID, stateR, image, getPreviousPage());
+                application.setActivePage(page);
             },
             e -> {
                 Page page = new ErrorPage(application, this, e.toString());

@@ -3,14 +3,19 @@ package cz.hartrik.puzzle;
 import cz.hartrik.puzzle.net.ConnectionHolder;
 import cz.hartrik.puzzle.page.Page;
 import cz.hartrik.puzzle.service.ServiceManager;
+import java.io.PrintWriter;
+import java.io.StringWriter;
+import java.util.logging.Logger;
 import javafx.application.Platform;
 
 /**
  *
- * @version 2017-10-10
+ * @version 2017-10-30
  * @author Patrik Harag
  */
 public class Application {
+
+    private static final Logger LOGGER = Logger.getLogger(Application.class.getName());
 
     private final FrameStage frameStage;
     private final FrameController controller;
@@ -50,4 +55,26 @@ public class Application {
     public ConnectionHolder getConnection() {
         return connection;
     }
+
+    public void logException(String msg, Exception e) {
+        StringWriter sw = new StringWriter();
+        PrintWriter pw = new PrintWriter(sw);
+        e.printStackTrace(pw);
+        String stackTrace = sw.toString(); // stack trace as a string
+
+        LOGGER.warning(msg + "\n" + stackTrace);
+    }
+
+    void onClose() {
+        controller.getActivePage().onClose();
+
+        if (connection != null) {
+            try {
+                connection.close();
+            } catch (Exception e) {
+                logException("While closing:", e);
+            }
+        }
+    }
+
 }

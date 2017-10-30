@@ -5,7 +5,7 @@ import java.util.function.Consumer;
 
 /**
  * @author Patrik Harag
- * @version 2017-10-29
+ * @version 2017-10-30
  */
 public class ConnectionHolder implements AutoCloseable {
 
@@ -38,8 +38,24 @@ public class ConnectionHolder implements AutoCloseable {
         return thread;
     }
 
-    public Connection getConnection() {
-        return connection;
+    public Thread asyncFinally(Command command, Consumer<Exception> after) {
+        Thread thread = new Thread(() -> {
+            Exception exception = null;
+            try {
+                command.apply(connection);
+            } catch (Exception e) {
+                exception = e;
+            } finally {
+                after.accept(exception);
+            }
+        }, "ConnectionHolder/Command/" + (++ID));
+        thread.setDaemon(true);
+        thread.start();
+        return thread;
+    }
+
+    public void addConsumer(String type, MessageConsumer consumer) {
+        connection.addConsumer(type, consumer);
     }
 
     @Override
