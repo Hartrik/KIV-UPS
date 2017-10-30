@@ -350,7 +350,7 @@ void controller_process_message(Session *session, char *type, char *content) {
 void controller_broadcast_game_action(Session* session, Game* game, Piece* p) {
     for (int i = 0; i < session_pool.sessions_size; ++i) {
         Session* s = session_pool.sessions[i];
-        if (s != session && session_is_in_game(s) && s->game == game) {
+        if (session_is_in_game(s) && s->game == game) {
             Buffer buffer;
             buffer_init(&buffer, 3 * (1 /*separators*/ + 5 /*digits*/));
 

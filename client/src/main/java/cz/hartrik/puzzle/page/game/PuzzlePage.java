@@ -74,14 +74,13 @@ public class PuzzlePage implements Page {
                 int y = row * Piece.SIZE;
                 int index = col + row * numOfColumns;
                 Piece piece = new Piece(index, image, x, y, moveFinalizer);
+                piece.setOnPieceMoveComplete(() -> onPieceMoveComplete(piece, moveFinalizer));
 
                 GameStateResponse.Piece p = initialState.getPieces().get(index);
                 piece.moveX(p.getX());
                 piece.moveY(p.getY());
                 piece.setLastSyncX(p.getX());
                 piece.setLastSyncY(p.getY());
-
-                initPieceMoveCompleteListener(piece, moveFinalizer);
 
                 pieces.add(piece);
                 group.getChildren().add(piece.getNode());
@@ -91,37 +90,44 @@ public class PuzzlePage implements Page {
         return group;
     }
 
-    private void initPieceMoveCompleteListener(Piece piece, PieceMoveFinalizer moveFinalizer) {
-        piece.getNode().setOnMouseReleased(event -> {
-            Set<Piece> group = moveFinalizer.moveComplete(piece);
-            List<GameStateResponse.Piece> changed = group.stream()
-                    .filter(Piece::changed)
-                    .peek(p -> {
-                        p.setLastSyncX(p.getX());
-                        p.setLastSyncY(p.getY());
-                    })
-                    .map(p -> new GameStateResponse.Piece(p.getId(), p.getX(), p.getY()))
-                    .collect(Collectors.toList());
+    private void onPieceMoveComplete(Piece piece, PieceMoveFinalizer moveFinalizer) {
+        Set<Piece> group = moveFinalizer.moveComplete(piece);
 
-            if (changed.isEmpty())
-                return;
+        List<GameStateResponse.Piece> changed = group.stream()
+                .filter(Piece::changed)
+                .map(p -> new GameStateResponse.Piece(p.getId(), p.getX(), p.getY()))
+                .collect(Collectors.toList());
 
-            application.getConnection().async(
-                    c -> {
-                        GenericResponse res = c.sendGameAction(changed)
-                                .get(Application.DEFAULT_TIMEOUT, TimeUnit.MILLISECONDS);
+        if (changed.isEmpty())
+            return;
 
-                        if (res != GenericResponse.OK) {
-                            throw new RuntimeException(res.toString());
-                        }
-                    },
-                    e -> {
-                        e.printStackTrace();
+        application.getConnection().async(
+            c -> {
+                GenericResponse result = c.sendGameAction(changed)
+                        .get(Application.DEFAULT_TIMEOUT, TimeUnit.MILLISECONDS);
+
+                if (result != GenericResponse.OK) {
+                    throw new RuntimeException(result.toString());
+                }
+            },
+            e -> {
+                application.logException("Game update failed:", e);
+
+                Platform.runLater(() -> {
+                    // move pieces to the last synced position
+                    for (GameStateResponse.Piece p : changed) {
+                        Piece r = pieces.get(p.getId());
+                        r.moveX(r.getLastSyncX());
+                        r.moveY(r.getLastSyncY());
                     }
-            );
-        });
+                });
+            }
+        );
     }
 
+    /**
+     * Init async updates from a server.
+     */
     private void initGameUpdatesListener() {
         ConnectionHolder holder = application.getConnection();
         holder.addConsumer("GUP", MessageConsumer.persistant(s -> {
@@ -135,6 +141,33 @@ public class PuzzlePage implements Page {
         }));
     }
 
+    /**
+     * Updates desk with a given game state.
+     *
+     * @param gameState game state
+     */
+    private void update(GameStateResponse gameState) {
+        for (GameStateResponse.Piece p : gameState.getPieces()) {
+            if (p.getId() < 0 || p.getId() >= pieces.size()) {
+                LOGGER.warning("Piece id out of range");
+            } else {
+                Piece piece = pieces.get(p.getId());
+                boolean synced = piece.isSynced();
+
+                piece.setLastSyncX(p.getX());
+                piece.setLastSyncY(p.getY());
+
+                if (synced) {
+                    piece.moveX(p.getX());
+                    piece.moveY(p.getY());
+                }
+            }
+        }
+    }
+
+    /**
+     * Init async WIN message from a server.
+     */
     private void initGameWinListener() {
         ConnectionHolder holder = application.getConnection();
         holder.addConsumer("GWI", MessageConsumer.persistant(s -> {
@@ -145,20 +178,11 @@ public class PuzzlePage implements Page {
         }));
     }
 
-    private void update(GameStateResponse gameState) {
-        for (GameStateResponse.Piece p : gameState.getPieces()) {
-            if (p.getId() < 0 || p.getId() >= pieces.size()) {
-                LOGGER.warning("Piece id out of range");
-            } else {
-                Piece piece = pieces.get(p.getId());
-                piece.setLastSyncX(p.getX());
-                piece.setLastSyncY(p.getY());
-                piece.moveX(p.getX());
-                piece.moveY(p.getY());
-            }
-        }
-    }
-
+    /**
+     * Creates right panel.
+     *
+     * @return right panel node
+     */
     private VBox createRightPanel() {
         VBox rightPanel = new VBox();
         rightPanel.getStyleClass().add("right-panel");
