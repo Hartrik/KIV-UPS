@@ -109,7 +109,7 @@ public class PuzzlePage implements Page {
             application.getConnection().async(
                     c -> {
                         GenericResponse res = c.sendGameAction(changed)
-                                .get(2000, TimeUnit.MILLISECONDS);
+                                .get(Application.DEFAULT_TIMEOUT, TimeUnit.MILLISECONDS);
 
                         if (res != GenericResponse.OK) {
                             throw new RuntimeException(res.toString());
@@ -186,7 +186,7 @@ public class PuzzlePage implements Page {
             onClose();
             application.setActivePage(new LoadingPage());
             application.getConnection().asyncFinally(
-                c -> c.sendLeaveGame().get(2000, TimeUnit.MILLISECONDS),
+                c -> c.sendLeaveGame().get(Application.DEFAULT_TIMEOUT, TimeUnit.MILLISECONDS),
                 e -> {
                     // ignore errors
                     Platform.runLater(() -> {
@@ -211,7 +211,7 @@ public class PuzzlePage implements Page {
         ConnectionHolder.Command updatePlayers = c -> {
             while (!terminated) {
                 Set<String> list = c.sendPlayerList(gameID)
-                        .get(2000, TimeUnit.MILLISECONDS);
+                        .get(Application.DEFAULT_TIMEOUT, TimeUnit.MILLISECONDS);
 
                 playersConsumer.accept(list);
 

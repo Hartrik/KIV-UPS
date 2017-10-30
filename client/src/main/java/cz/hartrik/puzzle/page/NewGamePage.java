@@ -71,7 +71,7 @@ public class NewGamePage extends CancelablePage {
         application.getConnection().async(
             c -> {
                 Future<NewGameResponse> newF = c.sendNewGame(w, h);
-                NewGameResponse newR = newF.get(2000, TimeUnit.MILLISECONDS);
+                NewGameResponse newR = newF.get(Application.DEFAULT_TIMEOUT, TimeUnit.MILLISECONDS);
                 if (newR.getStatus() != NewGameResponse.Status.OK) {
                     Page page = new ErrorPage(application, this, newR.getStatus().name());
                     application.setActivePage(page);
@@ -79,7 +79,7 @@ public class NewGamePage extends CancelablePage {
                 }
 
                 Future<JoinGameResponse> joinF = c.sendJoinGame(newR.getGameID());
-                JoinGameResponse joinR = joinF.get(2000, TimeUnit.MILLISECONDS);
+                JoinGameResponse joinR = joinF.get(Application.DEFAULT_TIMEOUT, TimeUnit.MILLISECONDS);
                 if (joinR != JoinGameResponse.OK) {
                     Page page = new ErrorPage(application, this, joinR.name());
                     application.setActivePage(page);
@@ -87,7 +87,7 @@ public class NewGamePage extends CancelablePage {
                 }
 
                 Future<GameStateResponse> stateF = c.sendGameStateUpdate(newR.getGameID());
-                GameStateResponse stateR = stateF.get(2000, TimeUnit.MILLISECONDS);
+                GameStateResponse stateR = stateF.get(Application.DEFAULT_TIMEOUT, TimeUnit.MILLISECONDS);
                 if (stateR.isCorrupted()) {
                     Page page = new ErrorPage(application, this, stateR.getException().toString());
                     application.setActivePage(page);

@@ -72,7 +72,7 @@ public class LogInPage implements Page {
 
         holder.async(c -> {
             Future<LogInResponse> future = c.sendLogIn(name);
-            LogInResponse response = future.get(2000, TimeUnit.MILLISECONDS);
+            LogInResponse response = future.get(Application.DEFAULT_TIMEOUT, TimeUnit.MILLISECONDS);
 
             if (response != LogInResponse.OK) {
                 Exceptions.silent(c::close);

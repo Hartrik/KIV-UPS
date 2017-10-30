@@ -15,6 +15,8 @@ import javafx.application.Platform;
  */
 public class Application {
 
+    public static final int DEFAULT_TIMEOUT = 4000;  // ms
+
     private static final Logger LOGGER = Logger.getLogger(Application.class.getName());
 
     private final FrameStage frameStage;

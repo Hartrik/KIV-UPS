@@ -1,5 +1,6 @@
 package cz.hartrik.puzzle.net;
 
+import cz.hartrik.puzzle.Application;
 import java.io.*;
 import java.nio.charset.Charset;
 import java.util.concurrent.BlockingQueue;
@@ -39,7 +40,7 @@ public class WriterThread extends Thread {
 
         try {
             while (!close || !queue.isEmpty()) {
-                String data = queue.poll(500, TimeUnit.MILLISECONDS);
+                String data = queue.poll(Application.DEFAULT_TIMEOUT, TimeUnit.MILLISECONDS);
                 if (data != null) {
                     writeData(data);
                 }

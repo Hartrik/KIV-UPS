@@ -66,7 +66,7 @@ public class MenuPage extends PageBase {
         application.setActivePage(new LoadingPage());
         application.getConnection().async(
             c -> {
-                c.sendLogOut().get(2000, TimeUnit.MILLISECONDS);
+                c.sendLogOut().get(Application.DEFAULT_TIMEOUT, TimeUnit.MILLISECONDS);
                 logOut();
             },
             e -> {
