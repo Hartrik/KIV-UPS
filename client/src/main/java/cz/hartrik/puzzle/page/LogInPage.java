@@ -20,18 +20,23 @@ import javafx.scene.text.Text;
 
 /**
  * @author Patrik Harag
- * @version 2017-10-17
+ * @version 2017-10-31
  */
 public class LogInPage implements Page {
 
     private final Application application;
+    private final Node node;
+
+    private TextField hostTextField;
+    private TextField portTextField;
+    private TextField userTextField;
 
     public LogInPage(Application application) {
         this.application = application;
+        this.node = createNode();
     }
 
-    @Override
-    public Node getNode() {
+    private Node createNode() {
         VBox box = new VBox();
         box.setSpacing(10);
         box.setAlignment(Pos.CENTER);
@@ -42,26 +47,66 @@ public class LogInPage implements Page {
         VBox dummy = new VBox();
         dummy.setMinHeight(50);
 
-        Label userLabel = new Label("Nick");
+        Label hostLabel = new Label("Host");
 
-        TextField userTextField = new NameTextField();
-        userTextField.setMaxWidth(200);
-        userTextField.setOnKeyPressed(e -> {
+        hostTextField = new TextField();
+        hostTextField.setText(ConnectionProvider.DEFAULT_HOST);
+        hostTextField.setMaxWidth(200);
+        hostTextField.setOnKeyPressed(e -> {
             if (e.getCode() == KeyCode.ENTER) {
-                String name = userTextField.getText();
-                if (!name.isEmpty())
-                    apply(name);
+                tryApply();
             }
         });
 
-        box.getChildren().addAll(title, dummy, userLabel, userTextField);
+        Label portLabel = new Label("Port");
+
+        portTextField = new LimitedTextField("[0-9]*", 5);
+        portTextField.setText("" + ConnectionProvider.DEFAULT_PORT);
+        portTextField.setMaxWidth(200);
+        portTextField.setOnKeyPressed(e -> {
+            if (e.getCode() == KeyCode.ENTER) {
+                tryApply();
+            }
+        });
+
+        Label userLabel = new Label("Nick");
+
+        userTextField = new LimitedTextField("[0-9a-zA-Z]*", 12);
+        userTextField.setMaxWidth(200);
+        userTextField.setOnKeyPressed(e -> {
+            if (e.getCode() == KeyCode.ENTER) {
+                tryApply();
+            }
+        });
+
+        box.getChildren().setAll(
+                title,
+                dummy,
+                hostLabel, hostTextField,
+                portLabel, portTextField,
+                userLabel, userTextField
+        );
         return box;
     }
 
-    private void apply(String name) {
+    @Override
+    public Node getNode() {
+        return node;
+    }
+
+    private void tryApply() {
+        String host = hostTextField.getText();
+        String port = portTextField.getText();
+        String name = userTextField.getText();
+
+        if (!name.isEmpty() && !host.isEmpty() && !port.isEmpty())
+            apply(host, Integer.parseInt(port), name);
+    }
+
+    private void apply(String host, int port, String name) {
         application.setActivePage(new LoadingPage());
 
-        Connection connection = ConnectionProvider.lazyConnect();
+        Connection connection = ConnectionProvider.lazyConnect(host, port);
         ConnectionHolder holder = new ConnectionHolder(connection);
         application.setConnection(holder);
 
@@ -81,8 +126,13 @@ public class LogInPage implements Page {
     }
 
     private void onError(Exception e) {
+        application.logException("Error", e);
         Page errorPage = new ErrorPage(application, this, e.toString());
         application.setActivePage(errorPage);
     }
 
+    @Override
+    public void onShow() {
+        userTextField.requestFocus();
+    }
 }
