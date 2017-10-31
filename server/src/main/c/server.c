@@ -73,10 +73,11 @@ int server_start(int port) {
 
     // Bind
     if (bind(server_fd, (struct sockaddr *) &server, sizeof(server)) < 0) {
-        perror("Bind failed");
+        printf("Bind failed (port=%d)\n", port);
+        perror("Error");
         return 1;
     }
-    printf("Bind done\n");
+    printf("Bind done, port=%d\n", port);
 
     // Set accept to be non-blocking
     if (!set_non_blocking(server_fd))
