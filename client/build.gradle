@@ -24,7 +24,7 @@ jar {
                 'Implementation-Title': 'Puzzle',
                 'Implementation-Version': '1.0.0-SNAPSHOT',
                 'Implementation-Vendor': 'Patrik Harag',
-                'Main-Class': 'cz.hartrik.puzzle.Main',
+                'Main-Class': 'cz.hartrik.puzzle.app.Main',
         )
     }
     doFirst {

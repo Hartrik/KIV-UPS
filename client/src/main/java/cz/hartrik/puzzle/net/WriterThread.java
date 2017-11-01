@@ -1,6 +1,6 @@
 package cz.hartrik.puzzle.net;
 
-import cz.hartrik.puzzle.Application;
+import cz.hartrik.puzzle.app.Application;
 import java.io.*;
 import java.nio.charset.Charset;
 import java.util.concurrent.BlockingQueue;
