@@ -24,8 +24,6 @@ typedef enum {
 
 /**
  * Holds information about one connection.
- * Thread that created this session is generally allowed
- * to modify its content without synchronization, except shared fields!.
  */
 typedef struct _Session {
 
