@@ -1,0 +1,252 @@
+\documentclass[12pt, a4paper]{report}
+
+\usepackage[czech]{babel}
+\usepackage[IL2]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{lmodern}  % lepší kvalita PDF
+
+\usepackage[a4paper,top=3cm,bottom=3cm,left=3cm,right=3cm,marginparwidth=1.75cm]{geometry}
+
+\usepackage{amsmath}
+\usepackage{graphicx}
+\usepackage{titling}
+\usepackage{enumitem}
+\usepackage[colorlinks=true, allcolors=black]{hyperref}
+\usepackage{url}
+\usepackage{caption}
+\usepackage{float}
+
+\usepackage{pdfpages}
+
+
+% formátování zdrojového kódu
+\usepackage{listings}
+\usepackage{color}
+
+\definecolor{dkgreen}{rgb}{0,0.6,0}
+\definecolor{gray}{rgb}{0.5,0.5,0.5}
+\definecolor{mauve}{rgb}{0.58,0,0.82}
+
+\lstset{frame=tb,
+	language=C,
+	aboveskip=3mm,
+	belowskip=3mm,
+	showstringspaces=false,
+	columns=flexible,
+	basicstyle={\small\ttfamily},
+	numbers=none,
+	numberstyle=\tiny\color{gray},
+	keywordstyle=\color{blue},
+	commentstyle=\color{dkgreen},
+	stringstyle=\color{mauve},
+	breaklines=true,
+	breakatwhitespace=true,
+	tabsize=4,
+	extendedchars=true,
+	literate=%
+	{á}{{\'a}}1
+	{č}{{\v{c}}}1
+	{ď}{{\v{d}}}1
+	{é}{{\'e}}1
+	{ě}{{\v{e}}}1
+	{í}{{\'i}}1
+	{ň}{{\v{n}}}1
+	{ó}{{\'o}}1
+	{ř}{{\v{r}}}1
+	{š}{{\v{s}}}1
+	{ť}{{\v{t}}}1
+	{ú}{{\'u}}1
+	{ů}{{\r{u}}}1
+	{ý}{{\'y}}1
+	{ž}{{\v{z}}}1
+	{Á}{{\'A}}1
+	{Č}{{\v{C}}}1
+	{Ď}{{\v{D}}}1
+	{É}{{\'E}}1
+	{Ě}{{\v{E}}}1
+	{Í}{{\'I}}1
+	{Ň}{{\v{N}}}1
+	{Ó}{{\'O}}1
+	{Ř}{{\v{R}}}1
+	{Š}{{\v{S}}}1
+	{Ť}{{\v{T}}}1
+	{Ú}{{\'U}}1
+	{Ů}{{\r{U}}}1
+	{Ý}{{\'Y}}1
+	{Ž}{{\v{Z}}}1
+}
+\lstset{language=C}
+
+
+% údaje na titulní straně
+\title{Online puzzle}
+\def \thesubtitle {Semestrální práce z předmětu KIV/UPS}
+\author{Patrik Harag}
+\def \theauthoremail {harag@students.zcu.cz}
+\def \theauthorid {(A15B0034P)}
+
+\begin{document}
+
+\begin{titlepage}
+	\begin{figure}
+		\includegraphics[height=50mm]{img-fav-logo}
+	\end{figure}
+	
+	\centering
+	{\large \hspace{1mm} \par} % tady musí být nějaký text jinak nefunguje vertikální odsazení
+	\vspace{15ex}
+	
+	{\scshape\Large \thesubtitle \par}
+	\vspace{1.5ex}
+	{\huge\bfseries \thetitle \par}
+	\vspace{2ex}
+	{\Large\itshape \theauthor \par}
+	\vspace{2ex}
+	{\texttt{\theauthoremail} \par}
+	\vspace{1ex}
+	{\texttt{\theauthorid} \par}
+	\vspace{5ex}
+	%{{Celková doba řešení: \textgreaterX h} \par}
+	
+	\vfill
+
+	{\large \today\par}
+\end{titlepage}
+
+% strana s obsahem
+\setcounter{page}{0} 
+\tableofcontents
+\thispagestyle{empty}
+
+
+\chapter{Úvod}
+\section{Zadání}
+Online puzzle, kde hráči společnými silami skládají puzzle. Dílky bude možné volně přesouvat po herní ploše, a to jednotlivě i po skupinách. Bude zahrnovat server v jazyce C a klienta v Javě.
+
+\section{Zásady vypracování}
+\begin{itemize}
+	\item Úlohu naprogramujte v programovacím jazyku C/C++ anebo Java. Pokud se jedná o úlohu server/klient, pak klient bude v Javě a server v C/C++.
+	\item Komunikace bude realizována textovým nešifrovaným protokolem nad TCP protokolem.
+	\item Výstupy serveru budou v alfanumerické podobě, klient může komunikovat i v grafice (není podmínkou).
+	\item Server řešte pod operačním systémem Linux, klient může běžet pod OS Windows XP. Emulátory typu Cygwin nebudou podporovány.
+	\item Realizujte konkurentní (paralelní) servery. Server musí být schopen obsluhovat požadavky více klientů souběžně.
+	\item Součástí programu bude trasování komunikace, dovolující zachytit proces komunikace na úrovni aplikačního protokolu a zápis trasování do souboru.
+	\item Každý program bude doplněn o zpracování statistických údajů (přenesený počet bytů, přenesený počet zpráv, počet navázaných spojení, počet přenosů zrušených pro chybu, doba běhu apod.).
+	\item Zdrojové kódy organizujte tak, aby od sebe byly odděleny části volání komunikačních funkcí, které jste vytvořili na základě zadání, od částí určených k demonstraci funkčnosti vašeho řešení (grafické rozhraní).
+\end{itemize}
+
+\chapter{Programátorská dokumentace}
+\section{Server}
+
+\paragraph{Použité nástroje} Server byl vyvinut v C 99.
+
+\paragraph{Paralelizace}
+Program pracuje ve dvou vláknech. Hlavní vlákno po inicializaci prostředí přijímá nová spojení. Druhé vlákno obsluhuje klienty a vyhodnocuje stav her. Toto řešení se ukázalo jako nejlepší z následujících důvodů:
+\begin{itemize}
+	\item jednoduchost -- v podstatě celá herní logika v jednom vlákně,
+	\item na straně serveru se neprovádí žádné výpočetně náročné operace,
+	\item cílový server stejně nebude mít více fyzických procesorových jader (VPS).
+\end{itemize}
+
+\paragraph{Ukládání a načítání}
+Je prováděno automaticky při startu a ukončení programu. Jako formát pro uložení je využit samotný síťový protokol. Načtení je realizováno formou simulace spojení. To znamená, že serveru je předána série zpráv, které zpracuje stejným způsobem jako při běžném chodu a tím uvede server do požadovaného stavu.
+
+\paragraph{Testy}
+Server je testován integračními testy s využitím klientského API.
+
+
+\subsection{Důležité datové struktury}
+
+\subsubsection*{Session}
+Tato datová struktura, která se nachází v souboru \emph{session.h}, ukládá informace o jednom spojení. Může představovat i hráče, ovšem po přerušení spojení a následovném opětovném navázání bude vytvořena zcela nová instance.
+
+Přístup k instancím této struktury musí být řízen, jelikož k nim přistupují obě vlákna.
+
+\begin{lstlisting}
+typedef struct _Session {
+
+	int id;
+	SessionStatus status;
+	
+	int socket_fd;
+	unsigned long long last_activity;
+	unsigned long long last_ping;
+	Buffer to_send;
+	int corrupted_messages;
+	
+	char name[SESSION_PLAYER_MAX_NAME_LENGTH + 1];
+	Game* game;
+
+} Session;
+\end{lstlisting}
+
+\subsubsection*{Game}
+Struktura ze souboru \emph{game.h}, která obsahuje stav jedné hry.
+
+\begin{lstlisting}
+typedef struct _Game {
+	int id;
+	unsigned int w, h;
+	Piece** pieces;
+	bool finished;
+} Game;
+
+typedef struct _Piece {
+	int id;
+	int x, y;
+} Piece;
+\end{lstlisting}
+
+
+\section{Klient}
+Klient je realizován v programovacím jazyce Java 8. Pro uživatelské rozhraní a je použit framework JavaFX.
+
+
+\subsection{Balíček cz.harag.puzzle.app}
+Obsahuje aplikační část -- vstupní třídu, která zpracovává vstup z příkazové řádky a grafické uživatelské rozhraní.
+
+\paragraph{Třídy:}
+\begin{itemize}
+	\item \emph{Main} -- vstupní řída
+	
+\end{itemize}
+
+
+\section{Digram tříd}
+%\begin{figure}[H]
+%	\centering
+%	\includegraphics[width=1\linewidth]{img-uml}
+%	\caption{Diagram tříd.}
+%	\label{fig:img-uml}
+%\end{figure}
+
+\section{Protokol}
+
+
+
+\chapter{Uživatelská dokumentace}
+\subsection{Server}
+
+\section{Sestavení}
+\section{Spuštění}
+
+\paragraph{Ukončení} Doporučený způsob ukončení je kombinací \emph{ctrl + c}.
+
+\subsection{Klient}
+
+\section{Sestavení}
+Pro sestavení je vyžadován nástroj JDK 8.
+Sestavení proběhne po zadání \emph{gradlew} nebo \emph{gradlew.bat} do příkazové řádky v kořenovém adresáři.
+
+\section{Spuštění}
+Spuštění vyžaduje JRE 8. Program se spustí zadáním \emph{java -jar program.jar}.
+
+
+\chapter{Závěr}
+
+
+
+\bibliographystyle{plain}
+\bibliography{sources}
+
+\end{document}

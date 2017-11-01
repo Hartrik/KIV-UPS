@@ -15,3 +15,12 @@
 /*/gradlew
 /*/gradlew.bat
 /*/gradle
+
+#LaTEX
+/*/*.aux
+/*/*.log
+/*/*.out
+/*/*.toc
+/*/*.bbl
+/*/*.blg
+/*/*.synctex.gz
