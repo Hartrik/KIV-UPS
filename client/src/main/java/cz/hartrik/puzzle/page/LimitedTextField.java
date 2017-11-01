@@ -6,12 +6,17 @@ import javafx.scene.control.TextField;
  * Text field that forbids from typing other than supported characters.
  *
  * @author Patrik Harag
- * @version 2017-10-10
+ * @version 2017-10-31
  */
-public class NameTextField extends TextField {
+public class LimitedTextField extends TextField {
 
-    private static final String PATTERN = "[0-9a-zA-Z]*";
-    private static final int MAX_LENGTH = 12;
+    private final String pattern;
+    private final int maxLength;
+
+    public LimitedTextField(String pattern, int maxLength) {
+        this.pattern = pattern;
+        this.maxLength = maxLength;
+    }
 
     @Override
     public void replaceText(int start, int end, String text) {
@@ -28,7 +33,7 @@ public class NameTextField extends TextField {
     }
 
     private boolean validate(String text) {
-        return text.matches(PATTERN)
-                && (getText().length() + text.length()) <= MAX_LENGTH;
+        return text.matches(pattern)
+                && (getText().length() + text.length()) <= maxLength;
     }
 }
