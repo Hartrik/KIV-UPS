@@ -1,6 +1,5 @@
 package cz.hartrik.puzzle.app;
 
-import cz.hartrik.puzzle.app.module.ApplicationModule;
 import java.net.URL;
 
 /**
@@ -9,11 +8,11 @@ import java.net.URL;
  * @version 2017-09-28
  * @author Patrik Harag
  */
-public class ApplicationBuilder {
+class ApplicationBuilder {
 
     private ApplicationBuilder() {}
 
-    public static Application build(ApplicationModule... modules) {
+    static Application build(ApplicationModule... modules) {
         URL fxml = FrameStage.class.getResource("Frame.fxml");
         FrameStage frameStage = new FrameStage(fxml);
 

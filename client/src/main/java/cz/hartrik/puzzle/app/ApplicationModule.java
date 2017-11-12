@@ -1,7 +1,5 @@
 
-package cz.hartrik.puzzle.app.module;
-
-import cz.hartrik.puzzle.app.Application;
+package cz.hartrik.puzzle.app;
 
 /**
  * Rozhraní pro modul, který do aplikace přidá nějakou funkcionalitu.

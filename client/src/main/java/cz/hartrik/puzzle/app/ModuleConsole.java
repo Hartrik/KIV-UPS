@@ -1,7 +1,6 @@
 
-package cz.hartrik.puzzle.app.module;
+package cz.hartrik.puzzle.app;
 
-import cz.hartrik.puzzle.app.Application;
 import java.util.logging.Handler;
 import java.util.logging.LogRecord;
 import java.util.logging.Logger;

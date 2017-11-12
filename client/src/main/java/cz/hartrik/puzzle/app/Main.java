@@ -2,7 +2,6 @@
 package cz.hartrik.puzzle.app;
 
 import cz.hartrik.common.io.Resources;
-import cz.hartrik.puzzle.app.module.ModuleConsole;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintWriter;
