@@ -16,7 +16,7 @@ logged --> connected:LOF
 state "In game" as game
 game --> not_connected:BYE,\nerror
 game --> logged:GOF
-game --> game:GMV,\nGST
+game --> game:GAC,\nGST, GPL
 
 state "Disconnected" as not_connected
 not_connected --> [*]

@@ -27,8 +27,8 @@ Client <-- Server: GST (game ID)
 
 ...user actions\nand other players actions...
 
-Client --> Server: GMV (game ID, piece, x, y)
-Client <-- Server: GMV (game ID, piece, x, y)
+Client --> Server: GAC (game ID, piece, x, y)
+Client <-- Server: GAC (game ID, piece, x, y)
 
 ...eventually...
 
