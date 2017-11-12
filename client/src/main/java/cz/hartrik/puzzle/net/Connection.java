@@ -14,6 +14,8 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
+ * Provides high level communication with a server.
+ *
  * @author Patrik Harag
  * @version 2017-10-30
  */
@@ -41,6 +43,9 @@ public class Connection implements AutoCloseable {
         this.writer = new WriterThread(this::onException);
     }
 
+    /**
+     * Start connection.
+     */
     synchronized void connect() throws IOException {
         if (connected) return;  // already connected
         this.connected = true;

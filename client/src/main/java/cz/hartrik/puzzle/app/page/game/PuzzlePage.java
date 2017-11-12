@@ -130,7 +130,7 @@ public class PuzzlePage implements Page {
      */
     private void initGameUpdatesListener() {
         ConnectionHolder holder = application.getConnection();
-        holder.addConsumer("GUP", MessageConsumer.persistant(s -> {
+        holder.addConsumer("GUP", MessageConsumer.persistent(s -> {
             GameStateResponse gameState = GameStateResponse.parse(s);
             if (gameState.isCorrupted()) {
                 // there is nothing to do with it...
@@ -170,7 +170,7 @@ public class PuzzlePage implements Page {
      */
     private void initGameWinListener() {
         ConnectionHolder holder = application.getConnection();
-        holder.addConsumer("GWI", MessageConsumer.persistant(s -> {
+        holder.addConsumer("GWI", MessageConsumer.persistent(s -> {
             Platform.runLater(() -> {
                 Page winPage = new WinPage(application, this, image);
                 application.setActivePage(winPage);

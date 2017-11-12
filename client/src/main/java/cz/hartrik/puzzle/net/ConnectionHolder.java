@@ -4,6 +4,8 @@ import cz.hartrik.common.Exceptions;
 import java.util.function.Consumer;
 
 /**
+ * Holds connection, provides higher abstraction.
+ *
  * @author Patrik Harag
  * @version 2017-10-30
  */
@@ -20,7 +22,7 @@ public class ConnectionHolder implements AutoCloseable {
     public ConnectionHolder(Connection connection) {
         this.connection = connection;
 
-        connection.addConsumer("PIN", MessageConsumer.persistant(s -> {
+        connection.addConsumer("PIN", MessageConsumer.persistent(s -> {
             Exceptions.silent(connection::sendPing);
         }));
     }

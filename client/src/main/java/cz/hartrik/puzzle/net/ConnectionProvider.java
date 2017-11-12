@@ -1,7 +1,7 @@
 package cz.hartrik.puzzle.net;
 
 /**
- * Class that initializes conection.
+ * Class that initializes connection.
  *
  * @author Patrik Harag
  * @version 2017-10-31

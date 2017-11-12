@@ -37,7 +37,7 @@ public class ServerStabilityTest {
     public void testLongConnection() throws Exception {
         try (Connection connection = ConnectionProvider.connect()) {
 
-            connection.addConsumer("PIN", MessageConsumer.persistant(s -> {
+            connection.addConsumer("PIN", MessageConsumer.persistent(s -> {
                 Exceptions.silent(connection::sendPing);
             }));
 
