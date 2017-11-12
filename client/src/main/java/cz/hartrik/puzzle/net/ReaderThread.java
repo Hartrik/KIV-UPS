@@ -1,5 +1,6 @@
 package cz.hartrik.puzzle.net;
 
+import java.io.BufferedReader;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
@@ -32,7 +33,8 @@ public class ReaderThread extends Thread {
         if (reader != null)
             throw new IllegalStateException("Stream already initialized");
 
-        this.reader = new InputStreamReader(inputStream, charset);
+        InputStreamReader streamReader = new InputStreamReader(inputStream, charset);
+        this.reader = new BufferedReader(streamReader);
     }
 
     @Override
