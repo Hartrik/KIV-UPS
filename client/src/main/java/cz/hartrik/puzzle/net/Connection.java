@@ -256,6 +256,6 @@ public class Connection implements AutoCloseable {
         Exceptions.silent(() -> writer.join(500));
         Exceptions.silent(() -> reader.join(500));
 
-        socket.close();
+        if (socket != null) socket.close();
     }
 }
