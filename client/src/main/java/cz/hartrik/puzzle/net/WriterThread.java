@@ -7,13 +7,17 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
+import java.util.logging.Logger;
 
 /**
+ * Daemon thread that write data into socket.
  *
  * @author Patrik Harag
- * @version 2017-10-07
+ * @version 2017-11-12
  */
 public class WriterThread extends Thread {
+
+    private static final Logger LOGGER = Logger.getLogger(WriterThread.class.getName());
 
     private final Consumer<Exception> onException;
     private final BlockingQueue<String> queue;
@@ -54,7 +58,7 @@ public class WriterThread extends Thread {
         writer.write(data);
         writer.flush();
 
-        System.out.println("--> " + data);
+        LOGGER.info("--> " + data);
     }
 
     public void send(String data) {

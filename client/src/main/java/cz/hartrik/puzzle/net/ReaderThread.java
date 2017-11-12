@@ -10,13 +10,17 @@ import java.util.Queue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.function.Consumer;
+import java.util.logging.Logger;
 
 /**
+ * Daemon thread that read data from socket.
  *
  * @author Patrik Harag
- * @version 2017-10-14
+ * @version 2017-11-12
  */
 public class ReaderThread extends Thread {
+
+    private static final Logger LOGGER = Logger.getLogger(ReaderThread.class.getName());
 
     private final Map<String, Queue<MessageConsumer>> consumers;
     private final Consumer<Exception> onException;
@@ -65,10 +69,10 @@ public class ReaderThread extends Thread {
     }
 
     private void processMessage(String data) {
-        System.out.println("<-- " + data);
+        LOGGER.info("<-- " + data);
 
         if (data.length() < 3) {
-            System.err.println("Message too short: " + data);
+            LOGGER.warning("Message too short: " + data);
         } else {
             String type = data.substring(0, 3);
             String content = data.substring(3);
