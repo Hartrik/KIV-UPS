@@ -5,6 +5,7 @@ import java.util.logging.Handler;
 import java.util.logging.LogRecord;
 import java.util.logging.Logger;
 import java.util.logging.SimpleFormatter;
+import javafx.application.Platform;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.geometry.Insets;
@@ -52,7 +53,9 @@ public class ModuleConsole implements ApplicationModule {
         logger.addHandler(new Handler() {
             @Override
             public void publish(LogRecord record) {
-                textArea.appendText(formatter.format(record));
+                Platform.runLater(() -> {
+                    textArea.appendText(formatter.format(record));
+                });
             }
 
             @Override
