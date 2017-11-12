@@ -1,5 +1,6 @@
 
 /**
+ * Contains structure for storing data about one connection and its functions.
  *
  * @author: Patrik Harag
  * @version: 2017-10-29
@@ -41,7 +42,10 @@ typedef struct _Session {
 
 } Session;
 
+/** Init session. */
 void session_init(Session *session);
+
+/** Free session. */
 void session_free(Session* session);
 
 bool session_is_active(Session *session);

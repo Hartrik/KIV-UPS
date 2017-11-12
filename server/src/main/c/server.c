@@ -1,6 +1,6 @@
 
 /**
- * Socket server, handles multiple clients using threads.
+ * Socket server, handles multiple clients.
  *
  * @author: Patrik Harag
  * @version: 2017-10-29

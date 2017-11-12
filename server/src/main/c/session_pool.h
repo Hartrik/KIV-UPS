@@ -1,5 +1,6 @@
 
 /**
+ * Manages all sessions at one place.
  *
  * @author: Patrik Harag
  * @version: 2017-10-28
@@ -22,9 +23,16 @@ typedef struct _SessionPool {
 
 } SessionPool;
 
+/** Init session pool. */
 void sp_init(SessionPool* session_pool);
+
+/** Check if the name is available. */
 bool sp_is_free_name(SessionPool* session_pool, char* name);
+
+/** Create new session. */
 Session* sp_create(SessionPool *session_pool);
+
+/** Free session pool. */
 void sp_free(SessionPool* session_pool);
 
 #endif

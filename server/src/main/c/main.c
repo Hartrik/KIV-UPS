@@ -1,5 +1,6 @@
 
 /**
+ * Contains main method, parses parameters.
  *
  * @author: Patrik Harag
  * @version: 2017-10-31

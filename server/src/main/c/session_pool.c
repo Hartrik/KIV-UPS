@@ -1,5 +1,6 @@
 
 /**
+ * Manages all sessions at one place.
  *
  * @author: Patrik Harag
  * @version: 2017-10-28

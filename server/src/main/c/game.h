@@ -1,5 +1,6 @@
 
 /**
+ * Contains structure for storing data about one game and its functions.
  *
  * @author: Patrik Harag
  * @version: 2017-10-29
@@ -29,9 +30,16 @@ typedef struct _Game {
     bool finished;
 } Game;
 
+/** Init game. */
 void game_init(Game* game, int id, unsigned int w, unsigned int h);
+
+/** Shuffle pieces. */
 void game_shuffle(Game* game, int max_w, int max_h);
+
+/** Check if the game is finished. */
 void game_check_is_finished(Game* game);
+
+/** Free game. */
 void game_free(Game* game);
 
 #endif

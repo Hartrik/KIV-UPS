@@ -1,5 +1,6 @@
 
 /**
+ * Contains structure for storing data about one game and its functions.
  *
  * @author: Patrik Harag
  * @version: 2017-10-29
