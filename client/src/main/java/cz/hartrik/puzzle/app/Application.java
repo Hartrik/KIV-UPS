@@ -4,7 +4,6 @@ import cz.hartrik.puzzle.net.ConnectionHolder;
 import cz.hartrik.puzzle.app.page.ErrorPage;
 import cz.hartrik.puzzle.app.page.LogInPage;
 import cz.hartrik.puzzle.app.page.Page;
-import cz.hartrik.puzzle.app.service.ServiceManager;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.logging.Logger;
@@ -12,7 +11,7 @@ import javafx.application.Platform;
 
 /**
  *
- * @version 2017-10-30
+ * @version 2017-11-12
  * @author Patrik Harag
  */
 public class Application {
@@ -23,7 +22,6 @@ public class Application {
 
     private final FrameStage frameStage;
     private final FrameController controller;
-    private final ServiceManager serviceManager;
     private final Page defaultPage;
 
     private ConnectionHolder connection;
@@ -31,7 +29,6 @@ public class Application {
     public Application(FrameStage frameStage, FrameController controller) {
         this.frameStage = frameStage;
         this.controller = controller;
-        this.serviceManager = new ServiceManager(this);
         this.defaultPage = new LogInPage(this);
 
         setActivePage(defaultPage);
@@ -43,10 +40,6 @@ public class Application {
 
     public FrameController getController() {
         return controller;
-    }
-
-    public ServiceManager getServiceManager() {
-        return serviceManager;
     }
 
     public void setActivePage(Page activePage) {

@@ -20,7 +20,6 @@ public class ApplicationBuilder {
         Application app = new Application(frameStage, frameStage.getFrameController());
         for (ApplicationModule module : modules) {
             module.init(app);
-            app.getServiceManager().register(module);
         }
 
         return app;
