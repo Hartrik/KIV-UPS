@@ -8,9 +8,14 @@ import java.util.List;
  * Server response to the GLI request.
  *
  * @author Patrik Harag
- * @version 2017-10-15
+ * @version 2017-11-12
  */
 public class GameListResponse {
+
+    private static final int MIN_W = 2;
+    private static final int MIN_H = 2;
+    private static final int MAX_W = 100;
+    private static final int MAX_H = 100;
 
     /**
      * Represents a game.
@@ -84,6 +89,12 @@ public class GameListResponse {
                 p.gameID = Integer.parseInt(valStr[0]);
                 p.width = Integer.parseInt(valStr[1]);
                 p.height = Integer.parseInt(valStr[2]);
+
+                if (p.width < MIN_W || p.width > MAX_W)
+                    return new GameListResponse(new RuntimeException("Wrong size!"));
+
+                if (p.height < MIN_H || p.height > MAX_H)
+                    return new GameListResponse(new RuntimeException("Wrong size!"));
 
                 list.add(p);
             }
