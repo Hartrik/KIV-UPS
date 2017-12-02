@@ -298,10 +298,6 @@ static void controller_process_GOF(Session *session, char *content) {
     controller_send_int(session, "GOF", PROTOCOL_GOF_OK);
 }
 
-static void controller_process_(Session *session, char *content) {
-    // TODO
-}
-
 void controller_process_message(Session *session, char *type, char *content) {
     stats_add_messages_received(1);
 

@@ -17,7 +17,7 @@
 
 GamePool game_pool;
 SessionPool session_pool;
-static pthread_mutex_t shared_lock;
+pthread_mutex_t shared_lock;
 
 /** Init shared state. */
 void shared_init();
