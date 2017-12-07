@@ -60,8 +60,24 @@ public class ConnectionHolder implements AutoCloseable {
         return thread;
     }
 
+    /**
+     * Adds consumer for given message type.
+     *
+     * @param type message type
+     * @param consumer callback
+     */
     public void addConsumer(String type, MessageConsumer consumer) {
         connection.addConsumer(type, consumer);
+    }
+
+    /**
+     * Sets consumer for given message type. Overrides current consumer(s).
+     *
+     * @param type message type
+     * @param consumer callback
+     */
+    public void setConsumer(String type, MessageConsumer consumer) {
+        connection.setConsumer(type, consumer);
     }
 
     @Override

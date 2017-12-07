@@ -64,8 +64,24 @@ public class Connection implements AutoCloseable {
         this.onConnectionLost = onConnectionLost;
     }
 
+    /**
+     * Adds consumer for given message type.
+     *
+     * @param type message type
+     * @param consumer callback
+     */
     public void addConsumer(String type, MessageConsumer consumer) {
         this.reader.addConsumer(type, consumer);
+    }
+
+    /**
+     * Sets consumer for given message type. Overrides current consumer(s).
+     *
+     * @param type message type
+     * @param consumer callback
+     */
+    public void setConsumer(String type, MessageConsumer consumer) {
+        this.reader.setConsumer(type, consumer);
     }
 
     private void onException(Exception e) {

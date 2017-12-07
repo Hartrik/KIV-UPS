@@ -33,6 +33,12 @@ public class ReaderThread extends Thread {
         setDaemon(true);
     }
 
+    /**
+     * Init reader.
+     *
+     * @param inputStream stream
+     * @param charset charset
+     */
     public synchronized void initStream(InputStream inputStream, Charset charset) {
         if (reader != null)
             throw new IllegalStateException("Stream already initialized");
@@ -89,10 +95,31 @@ public class ReaderThread extends Thread {
         }
     }
 
+    /**
+     * Adds consumer for given message type.
+     *
+     * @param type message type
+     * @param contentConsumer callback
+     */
     public void addConsumer(String type, MessageConsumer contentConsumer) {
         Queue<MessageConsumer> queue = consumers
                 .getOrDefault(type, new ConcurrentLinkedQueue<>());
 
+        queue.add(contentConsumer);
+        consumers.put(type, queue);
+    }
+
+    /**
+     * Sets consumer for given message type. Overrides current consumer(s).
+     *
+     * @param type message type
+     * @param contentConsumer callback
+     */
+    public void setConsumer(String type, MessageConsumer contentConsumer) {
+        Queue<MessageConsumer> queue = consumers
+                .getOrDefault(type, new ConcurrentLinkedQueue<>());
+
+        queue.clear();
         queue.add(contentConsumer);
         consumers.put(type, queue);
     }
