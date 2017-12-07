@@ -28,9 +28,10 @@ import javafx.scene.layout.VBox;
 import javafx.scene.text.Font;
 
 /**
+ * Page with puzzle.
  *
  * @author Patrik Harag
- * @version 2017-10-30
+ * @version 2017-12-07
  */
 public class PuzzlePage implements Page {
 
@@ -172,8 +173,8 @@ public class PuzzlePage implements Page {
         ConnectionHolder holder = application.getConnection();
         holder.setConsumer("GWI", MessageConsumer.persistent(s -> {
             Platform.runLater(() -> {
-                Page winPage = new WinPage(application, this, image);
-                application.setActivePage(winPage);
+                Page winPage = new WinPage(application, previousPage, image);
+                closeGame(winPage);
             });
         }));
     }
@@ -207,16 +208,7 @@ public class PuzzlePage implements Page {
 
         Button leaveButton = new Button("Leave game");
         leaveButton.setOnAction(event -> {
-            onClose();
-            application.setActivePage(new LoadingPage());
-            application.getConnection().asyncFinally(
-                c -> c.sendLeaveGame().get(Application.DEFAULT_TIMEOUT, TimeUnit.MILLISECONDS),
-                e -> {
-                    // ignore errors
-                    Platform.runLater(() -> {
-                        application.setActivePage(previousPage);
-                    });
-                });
+            closeGame(previousPage);
         });
         leaveButton.setPrefWidth(100);
 
@@ -274,6 +266,21 @@ public class PuzzlePage implements Page {
         HBox.setHgrow(rightPanel, Priority.NEVER);
         HBox.setHgrow(scrollPane, Priority.ALWAYS);
         return new HBox(scrollPane, rightPanel);
+    }
+
+    /**
+     * Send close game request to the server and switch page.
+     */
+    private void closeGame(Page nextPage) {
+        application.setActivePage(new LoadingPage());
+        application.getConnection().asyncFinally(
+                c -> c.sendLeaveGame().get(Application.DEFAULT_TIMEOUT, TimeUnit.MILLISECONDS),
+                e -> {
+                    // ignore errors
+                    Platform.runLater(() -> {
+                        application.setActivePage(nextPage);
+                    });
+                });
     }
 
     @Override

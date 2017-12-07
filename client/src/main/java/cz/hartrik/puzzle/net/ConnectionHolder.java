@@ -7,7 +7,7 @@ import java.util.function.Consumer;
  * Holds connection, provides higher abstraction.
  *
  * @author Patrik Harag
- * @version 2017-10-30
+ * @version 2017-12-07
  */
 public class ConnectionHolder implements AutoCloseable {
 

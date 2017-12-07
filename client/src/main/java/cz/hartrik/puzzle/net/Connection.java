@@ -17,7 +17,7 @@ import java.util.stream.Stream;
  * Provides high level communication with a server.
  *
  * @author Patrik Harag
- * @version 2017-10-30
+ * @version 2017-12-07
  */
 public class Connection implements AutoCloseable {
 

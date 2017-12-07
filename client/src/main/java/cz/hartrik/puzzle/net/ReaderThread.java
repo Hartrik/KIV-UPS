@@ -16,7 +16,7 @@ import java.util.logging.Logger;
  * Daemon thread that read data from socket.
  *
  * @author Patrik Harag
- * @version 2017-11-12
+ * @version 2017-12-07
  */
 public class ReaderThread extends Thread {
 
