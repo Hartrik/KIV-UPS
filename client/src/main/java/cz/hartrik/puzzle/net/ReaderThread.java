@@ -16,10 +16,11 @@ import java.util.logging.Logger;
  * Daemon thread that read data from socket.
  *
  * @author Patrik Harag
- * @version 2017-12-07
+ * @version 2017-12-09
  */
 public class ReaderThread extends Thread {
 
+    private static final int YIELD_AFTER = 1024;
     private static final Logger LOGGER = Logger.getLogger(ReaderThread.class.getName());
 
     private final Map<String, Queue<MessageConsumer>> consumers;
@@ -52,6 +53,7 @@ public class ReaderThread extends Thread {
         if (reader == null)
             throw new IllegalStateException("Stream not initialized!");
 
+        long yieldCounter = 0;
         try {
             StringBuilder builder = new StringBuilder();
             while (true) {
@@ -67,6 +69,12 @@ public class ReaderThread extends Thread {
                     }
                 } else {
                     builder.append((char) c);
+                }
+
+                yieldCounter++;
+                if (yieldCounter > YIELD_AFTER) {
+                    yieldCounter = 0;
+                    Thread.sleep(100);
                 }
             }
         } catch (Exception e) {
