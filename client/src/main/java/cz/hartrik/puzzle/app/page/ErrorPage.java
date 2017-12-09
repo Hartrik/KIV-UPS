@@ -49,4 +49,7 @@ public class ErrorPage implements Page {
         return box;
     }
 
+    public String getMessage() {
+        return message;
+    }
 }

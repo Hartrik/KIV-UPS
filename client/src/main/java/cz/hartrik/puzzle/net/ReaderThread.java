@@ -21,12 +21,14 @@ import java.util.logging.Logger;
 public class ReaderThread extends Thread {
 
     private static final int YIELD_AFTER = 1024;
+    private static final int MAX_CORRUPTED_MESSAGES = 50;
     private static final Logger LOGGER = Logger.getLogger(ReaderThread.class.getName());
 
     private final Map<String, Queue<MessageConsumer>> consumers;
     private final Consumer<Exception> onException;
     private volatile Reader reader;
     private volatile boolean close = false;
+    private int corruptedMessages;
 
     public ReaderThread(Consumer<Exception> onException) {
         this.onException = onException;
@@ -97,7 +99,12 @@ public class ReaderThread extends Thread {
                     queue.poll();
                 }
             } else {
+                corruptedMessages++;
                 LOGGER.warning("Unknown message type: " + type);
+
+                if (corruptedMessages > MAX_CORRUPTED_MESSAGES) {
+                    throw new ConnectionTerminatedException("Too many corrupted messages");
+                }
             }
         }
     }

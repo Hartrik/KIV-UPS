@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -17,7 +18,7 @@ import java.util.stream.Stream;
  * Provides high level communication with a server.
  *
  * @author Patrik Harag
- * @version 2017-12-07
+ * @version 2017-12-09
  */
 public class Connection implements AutoCloseable {
 
@@ -33,7 +34,7 @@ public class Connection implements AutoCloseable {
     private ReaderThread reader;
     private WriterThread writer;
 
-    private volatile Runnable onConnectionLost;
+    private volatile Consumer<Exception> onConnectionLost;
     private volatile Exception exception;
 
     Connection(String host, int port) {
@@ -60,7 +61,7 @@ public class Connection implements AutoCloseable {
         writer.start();
     }
 
-    void setOnConnectionLost(Runnable onConnectionLost) {
+    void setOnConnectionLost(Consumer<Exception> onConnectionLost) {
         this.onConnectionLost = onConnectionLost;
     }
 
@@ -92,7 +93,7 @@ public class Connection implements AutoCloseable {
         Exceptions.silent(this::closeNow);
 
         if (onConnectionLost != null)
-            onConnectionLost.run();
+            onConnectionLost.accept(e);
     }
 
     private void send(String content) throws Exception {
