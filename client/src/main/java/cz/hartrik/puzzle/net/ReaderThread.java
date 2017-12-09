@@ -91,6 +91,8 @@ public class ReaderThread extends Thread {
                 if (consumer.isTemporary()) {
                     queue.poll();
                 }
+            } else {
+                LOGGER.warning("Unknown message type: " + type);
             }
         }
     }
