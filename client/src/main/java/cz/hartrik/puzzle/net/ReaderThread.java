@@ -56,12 +56,9 @@ public class ReaderThread extends Thread {
         long yieldCounter = 0;
         try {
             StringBuilder builder = new StringBuilder();
-            while (true) {
-                int c = reader.read();
-                if (c == -1) {
-                    return;  // stream closed
-                }
+            int c;
 
+            while (!close && (c = reader.read()) != -1) {
                 if (c == '|') {
                     if (builder.length() > 0) {
                         processMessage(builder.toString());
@@ -135,7 +132,7 @@ public class ReaderThread extends Thread {
     }
 
     public void close() {
-        this.close = true;  // TODO
+        this.close = true;
     }
 
 }
