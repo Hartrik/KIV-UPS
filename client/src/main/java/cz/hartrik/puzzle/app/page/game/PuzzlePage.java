@@ -15,8 +15,12 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
+import javafx.animation.KeyFrame;
+import javafx.animation.KeyValue;
+import javafx.animation.Timeline;
 import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
+import javafx.beans.property.SimpleDoubleProperty;
 import javafx.scene.Group;
 import javafx.scene.Node;
 import javafx.scene.control.Button;
@@ -28,6 +32,7 @@ import javafx.scene.layout.Priority;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.text.Font;
+import javafx.util.Duration;
 
 /**
  * Page with puzzle.
@@ -172,22 +177,48 @@ public class PuzzlePage implements Page {
      * @param gameState game state
      */
     private void update(GameStateResponse gameState) {
-        for (GameStateResponse.Piece p : gameState.getPieces()) {
-            if (p.getId() < 0 || p.getId() >= pieces.size()) {
+        for (GameStateResponse.Piece newPos : gameState.getPieces()) {
+            if (newPos.getId() < 0 || newPos.getId() >= pieces.size()) {
                 LOGGER.warning("Piece id out of range");
             } else {
-                Piece piece = pieces.get(p.getId());
+                Piece piece = pieces.get(newPos.getId());
                 boolean synced = piece.isSynced();
 
-                piece.setLastSyncX(p.getX());
-                piece.setLastSyncY(p.getY());
-
                 if (synced) {
-                    piece.moveX(p.getX());
-                    piece.moveY(p.getY());
+                    animateMove(piece, newPos);
+
+                } else {
+                    piece.setLastSyncX(newPos.getX());
+                    piece.setLastSyncY(newPos.getY());
                 }
             }
         }
+    }
+
+    private void animateMove(Piece piece, GameStateResponse.Piece newPos) {
+        SimpleDoubleProperty x = new SimpleDoubleProperty();
+        x.addListener((observable, oldValue, newValue) -> {
+            int currentX = (int) newValue.doubleValue();
+            piece.moveX(currentX);
+            piece.setLastSyncX(currentX);
+        });
+        SimpleDoubleProperty y = new SimpleDoubleProperty();
+        y.addListener((observable, oldValue, newValue) -> {
+            int currentY = (int) newValue.doubleValue();
+            piece.moveY(currentY);
+            piece.setLastSyncY(currentY);
+        });
+
+        Timeline timeline = new Timeline();
+        timeline.getKeyFrames().addAll(
+                new KeyFrame(Duration.ZERO,
+                        new KeyValue(x, piece.getX()),
+                        new KeyValue(y, piece.getY())),
+                new KeyFrame(new Duration(500),
+                        new KeyValue(x, newPos.getX()),
+                        new KeyValue(y, newPos.getY())));
+
+        timeline.play();
     }
 
     /**
