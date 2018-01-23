@@ -61,6 +61,7 @@ public class PuzzlePage implements Page {
 
         initGameUpdatesListener();
         initGameWinListener();
+        new CheatManager(this).register();
     }
 
     private Node createNode(Group desk) {
@@ -278,6 +279,10 @@ public class PuzzlePage implements Page {
         };
 
         application.getConnection().asyncFinally(updatePlayers, onComplete);
+    }
+
+    List<Piece> getPieces() {
+        return pieces;
     }
 
     @Override
