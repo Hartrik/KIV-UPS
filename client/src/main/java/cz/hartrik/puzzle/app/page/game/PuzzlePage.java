@@ -44,8 +44,8 @@ public class PuzzlePage implements Page {
     private final Image image;
     private final Page previousPage;
 
-    private List<Piece> pieces;
-    private Group desk;
+    private final List<Piece> pieces;
+    private final Node node;
 
     private volatile boolean terminated = false;
 
@@ -55,11 +55,33 @@ public class PuzzlePage implements Page {
         this.application = application;
         this.gameID = gameID;
         this.image = image;
-        this.desk = createDesk(initial);
+        this.pieces = new ArrayList<>();
         this.previousPage = previousPage;
+        this.node = createNode(createDesk(initial));
 
         initGameUpdatesListener();
         initGameWinListener();
+    }
+
+    private Node createNode(Group desk) {
+        ScrollPane scrollPane = new ScrollPane();
+
+        // performs centering when the desk is smaller than viewport
+        StackPane deskHolder = new StackPane(desk);
+        deskHolder.minWidthProperty().bind(Bindings.createDoubleBinding(
+                () -> scrollPane.getViewportBounds().getWidth(),
+                scrollPane.viewportBoundsProperty()));
+        deskHolder.minHeightProperty().bind(Bindings.createDoubleBinding(
+                () -> scrollPane.getViewportBounds().getHeight(),
+                scrollPane.viewportBoundsProperty()));
+
+        scrollPane.setContent(deskHolder);
+        scrollPane.setPannable(true);
+
+        VBox rightPanel = createRightPanel();
+        HBox.setHgrow(rightPanel, Priority.NEVER);
+        HBox.setHgrow(scrollPane, Priority.ALWAYS);
+        return new HBox(scrollPane, rightPanel);
     }
 
     private Group createDesk(GameStateResponse initialState) {
@@ -67,7 +89,6 @@ public class PuzzlePage implements Page {
         int numOfRows = (int) (image.getHeight() / Piece.SIZE);
         Group group = new Group();
 
-        this.pieces = new ArrayList<>();
         Desk desk = new Desk(numOfColumns, numOfRows, pieces);
         PieceMoveFinalizer moveFinalizer = new PieceMoveFinalizer(desk);
 
@@ -261,24 +282,7 @@ public class PuzzlePage implements Page {
 
     @Override
     public Node getNode() {
-        ScrollPane scrollPane = new ScrollPane();
-
-        // performs centering when the desk is smaller than viewport
-        StackPane deskHolder = new StackPane(desk);
-        deskHolder.minWidthProperty().bind(Bindings.createDoubleBinding(
-                () -> scrollPane.getViewportBounds().getWidth(),
-                scrollPane.viewportBoundsProperty()));
-        deskHolder.minHeightProperty().bind(Bindings.createDoubleBinding(
-                () -> scrollPane.getViewportBounds().getHeight(),
-                scrollPane.viewportBoundsProperty()));
-
-        scrollPane.setContent(deskHolder);
-        scrollPane.setPannable(true);
-
-        VBox rightPanel = createRightPanel();
-        HBox.setHgrow(rightPanel, Priority.NEVER);
-        HBox.setHgrow(scrollPane, Priority.ALWAYS);
-        return new HBox(scrollPane, rightPanel);
+        return node;
     }
 
     /**
