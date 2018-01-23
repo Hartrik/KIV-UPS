@@ -273,6 +273,7 @@ public class PuzzlePage implements Page {
                 scrollPane.viewportBoundsProperty()));
 
         scrollPane.setContent(deskHolder);
+        scrollPane.setPannable(true);
 
         VBox rightPanel = createRightPanel();
         HBox.setHgrow(rightPanel, Priority.NEVER);

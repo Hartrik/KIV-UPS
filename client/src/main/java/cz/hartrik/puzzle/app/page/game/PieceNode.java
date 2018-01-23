@@ -75,6 +75,9 @@ public class PieceNode extends Parent {
                 node.setTranslateY((int) (node.getTranslateY() + diffY));
                 moveFinalizer.move(p);
             }
+
+            // consume drag event to prevent from viewport panning
+            me.consume();
         });
     }
 
