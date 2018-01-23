@@ -16,6 +16,7 @@ import java.util.function.Consumer;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 import javafx.application.Platform;
+import javafx.beans.binding.Bindings;
 import javafx.scene.Group;
 import javafx.scene.Node;
 import javafx.scene.control.Button;
@@ -24,6 +25,7 @@ import javafx.scene.control.ScrollPane;
 import javafx.scene.image.Image;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
+import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.text.Font;
 
@@ -31,7 +33,7 @@ import javafx.scene.text.Font;
  * Page with puzzle.
  *
  * @author Patrik Harag
- * @version 2017-12-07
+ * @version 2018-01-23
  */
 public class PuzzlePage implements Page {
 
@@ -260,7 +262,17 @@ public class PuzzlePage implements Page {
     @Override
     public Node getNode() {
         ScrollPane scrollPane = new ScrollPane();
-        scrollPane.setContent(desk);
+
+        // performs centering when the desk is smaller than viewport
+        StackPane deskHolder = new StackPane(desk);
+        deskHolder.minWidthProperty().bind(Bindings.createDoubleBinding(
+                () -> scrollPane.getViewportBounds().getWidth(),
+                scrollPane.viewportBoundsProperty()));
+        deskHolder.minHeightProperty().bind(Bindings.createDoubleBinding(
+                () -> scrollPane.getViewportBounds().getHeight(),
+                scrollPane.viewportBoundsProperty()));
+
+        scrollPane.setContent(deskHolder);
 
         VBox rightPanel = createRightPanel();
         HBox.setHgrow(rightPanel, Priority.NEVER);
