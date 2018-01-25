@@ -22,7 +22,7 @@ jar {
     manifest {
         attributes(
                 'Implementation-Title': 'Puzzle',
-                'Implementation-Version': '1.0.0-SNAPSHOT',
+                'Implementation-Version': '1.0.0',
                 'Implementation-Vendor': 'Patrik Harag',
                 'Main-Class': 'cz.hartrik.puzzle.app.Main',
         )

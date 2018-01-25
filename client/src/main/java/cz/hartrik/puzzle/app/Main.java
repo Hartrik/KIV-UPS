@@ -15,7 +15,7 @@ import javafx.stage.Stage;
 /**
  * The main class.
  *
- * @version 2017-10-10
+ * @version 2018-01-25
  * @author Patrik Harag
  */
 public class Main extends javafx.application.Application {
@@ -23,11 +23,10 @@ public class Main extends javafx.application.Application {
     private static final Logger LOGGER = Logger.getLogger(Main.class.getName());
     private static final String LOGGING_CONFIG = "/logging.properties";
 
-    public static final String APP_NAME = "Puzzle";
-    public static final String APP_VERSION = "1.0.0-SNAPSHOT";
-    public static final String APP_VERSION_DATE = "2017-09-28";
-    public static final String APP_TITLE = APP_NAME + " (" + APP_VERSION + ")";
-    public static final String APP_AUTHOR = "© 2017 Patrik Harag\npatrik.harag@gmail.com";
+    public static final String APP_NAME = "Online Puzzle";
+    public static final String APP_VERSION = "1.0.0";
+    public static final String APP_AUTHOR = "© 2018 Patrik Harag";
+    public static final String APP_TITLE = APP_NAME + " " + APP_VERSION + " " + APP_AUTHOR;
 
     public static final String ICON = "puzzle-icon.png";
 
